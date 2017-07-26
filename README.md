@@ -37,7 +37,7 @@ func main() {
     
     // Time Format defaults to: "2006/01/02 15:04"
     // you can change it to something else or disable it with:
-    golog.DefaultTimeFormat = ""
+    golog.SetTimeFormat("")
     
     // Level defaults to "error",
     // but you can change it:

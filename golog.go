@@ -20,6 +20,12 @@ func SetOutput(w io.Writer) {
 	Default.SetOutput(w)
 }
 
+// SetTimeFormat sets time format for logs,
+// if "s" is empty then time representation will be off.
+func SetTimeFormat(s string) {
+	Default.SetTimeFormat(s)
+}
+
 // SetLevel accepts a string representation of
 // a `Level` and returns a `Level` value based on that "levelName".
 //

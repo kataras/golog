@@ -25,25 +25,23 @@ type Handler func(value Log) (handled bool)
 
 // Logger is our golog.
 type Logger struct {
-	Level    Level
-	mu       sync.Mutex
-	Printer  *pio.Printer
-	handlers []Handler
+	Level      Level
+	TimeFormat string
+	mu         sync.Mutex
+	Printer    *pio.Printer
+	handlers   []Handler
 }
 
 // New returns a new golog, default Level is `InfoLevel`.
 func New() *Logger {
 	gologger := &Logger{
-		Level:   InfoLevel,
-		Printer: pio.NewPrinter("", os.Stderr).Hijack(logHijacker),
+		Level:      InfoLevel,
+		TimeFormat: "2006/01/02 15:04",
+		Printer:    pio.NewPrinter("", os.Stderr).Hijack(logHijacker),
 	}
 	// gologger.api = gologger
 	return gologger
 }
-
-// DefaultTimeFormat is the format that
-// golog uses to print the log's time.
-var DefaultTimeFormat = "2006/01/02 15:04"
 
 // we could use marshal inside Log but we don't have access to printer,
 // we could also use the .Handle with NopOutput too but
@@ -56,12 +54,13 @@ var logHijacker = func(ctx *pio.Ctx) {
 	}
 
 	prefix := prefixFromLevel(l.Level, ctx.Printer.IsTerminal)
-	formattedTime := ""
-	if l.Time != zeroTime && DefaultTimeFormat != "" {
-		formattedTime = l.Time.Format(DefaultTimeFormat) + " "
-	}
 	if prefix != "" {
 		prefix += " "
+	}
+
+	formattedTime := l.FormatTime()
+	if formattedTime != "" {
+		formattedTime += " "
 	}
 
 	ctx.Store([]byte(fmt.Sprintf("%s%s%s", prefix, formattedTime, l.Message)), nil)
@@ -74,6 +73,14 @@ var NopOutput = pio.NopOutput()
 // SetOutput overrides the Printer's output with another `io.Writer`.
 func (l *Logger) SetOutput(w io.Writer) {
 	l.Printer.SetOutput(w)
+}
+
+// SetTimeFormat sets time format for logs,
+// if "s" is empty then time representation will be off.
+func (l *Logger) SetTimeFormat(s string) {
+	l.mu.Lock()
+	l.TimeFormat = s
+	l.mu.Unlock()
 }
 
 // SetLevel accepts a string representation of
@@ -98,7 +105,7 @@ func (l *Logger) print(level Level, msg string, newLine bool) {
 		// newLine passed here in order for handler to know
 		// if this message derives from Println and Leveled functions
 		// or by simply, Print.
-		log := acquireLog(level, msg, newLine)
+		log := acquireLog(level, msg, newLine, l.TimeFormat)
 		// if not handled by one of the handler
 		// then print it as usual.
 		if !l.handled(log) {
