@@ -9,9 +9,10 @@ _golog_ is a simple, fast and easy-to-use level-based logger written entirely in
 [![github closed issues](https://img.shields.io/github/issues-closed/kataras/golog.svg)](https://github.com/kataras/golog/issues?q=is%3Aissue+is%3Aclosed)
 
 1. it can scan from sources and log them 
-2. it can use more than one output (opossite of 1.)
+2. it can use more than one output
 3. its output writer can be overridden by any third-party logger
 4. colors and levels such as `error`, `warn`, `info`, `debug` or `disable`
+5. incredible high-performant, two times faster than logrus
 
 Navigate through [_examples](_examples/) and [integrations](_examples/integrations/) to learn if that fair solution suits your needs.
 
@@ -39,7 +40,7 @@ func main() {
     // you can change it to something else or disable it with:
     golog.SetTimeFormat("")
     
-    // Level defaults to "error",
+    // Level defaults to "info",
     // but you can change it:
     golog.SetLevel("debug")
     
@@ -59,6 +60,15 @@ $ go run main.go
 > [ERRO] This is an error message
 > [DBUG] This is a debug message
 ```
+
+### 🔥 Benchmarks
+
+| test | times ran (large is better) |  ns/op (small is better) | B/op (small is better) | allocs/op (small is better) |
+| -----------|--------|-------------|-------------|-------------|
+| **BenchmarkGologPrint** | 2000000 | 3918 ns/op | 1069 B/op | 32 allocs/op |
+| BenchmarkLogrusPrint | 1000000 | 9178 ns/op | 1594 B/op | 64 allocs/op |
+
+Click [here](_benchmarks) for details.
 
 ### 👥 Contributing
 

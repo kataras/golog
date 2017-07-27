@@ -13,7 +13,7 @@ func main() {
 	// you can change it to something else or disable it with:
 	golog.SetTimeFormat("")
 
-	// Level defaults to "error",
+	// Level defaults to "info",
 	// but you can change it:
 	golog.SetLevel("debug")
 

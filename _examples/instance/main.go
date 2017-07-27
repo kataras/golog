@@ -11,7 +11,7 @@ func main() {
 	// but you can change it:
 	// log.SetOutput(os.Stdout)
 
-	// Level defaults to "error",
+	// Level defaults to "info",
 	// but you can change it:
 	log.SetLevel("debug")
 

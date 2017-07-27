@@ -36,7 +36,7 @@ Source code and other details for the project are available at GitHub:
 
 Current Version
 
-0.0.2
+0.0.3
 
 Installation
 
@@ -65,7 +65,7 @@ Example code:
 		// you can change it to something else or disable it with:
 		golog.SetTimeFormat("")
 
-		// Level defaults to "error",
+		// Level defaults to "info",
 		// but you can change it:
 		golog.SetLevel("debug")
 
@@ -100,7 +100,7 @@ Example Code:
 		// but you can change it:
 		// log.SetOutput(os.Stdout)
 
-		// Level defaults to "error",
+		// Level defaults to "info",
 		// but you can change it:
 		log.SetLevel("debug")
 
@@ -296,4 +296,4 @@ Examples:
 package golog // import "github.com/kataras/golog"
 
 // Version is the version string representation of the "golog" package.
-const Version = "0.0.2"
+const Version = "0.0.3"

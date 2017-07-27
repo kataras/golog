@@ -23,15 +23,15 @@ type ExternalLogger interface {
 // then, instead of printing from the logger's Printer
 // it prints from the given "logger".
 func integrateExternalLogger(logger ExternalLogger) Handler {
-	return func(value Log) bool {
-		printFunc := getExternalPrintFunc(logger, value)
-		printFunc(value.Message)
+	return func(log *Log) bool {
+		printFunc := getExternalPrintFunc(logger, log)
+		printFunc(log.Message)
 		return true
 	}
 }
 
-func getExternalPrintFunc(logger ExternalLogger, value Log) func(...interface{}) {
-	switch value.Level {
+func getExternalPrintFunc(logger ExternalLogger, log *Log) func(...interface{}) {
+	switch log.Level {
 	case ErrorLevel:
 		return logger.Error
 	case WarnLevel:
@@ -45,7 +45,7 @@ func getExternalPrintFunc(logger ExternalLogger, value Log) func(...interface{})
 	// disabled level or use of golog#Print/Println functions:
 
 	// passed with Println
-	if value.NewLine {
+	if log.NewLine {
 		return logger.Println
 	}
 
@@ -64,18 +64,18 @@ type StdLogger interface {
 }
 
 func integrateStdLogger(logger StdLogger) Handler {
-	return func(value Log) bool {
-		printFunc := getStdPrintFunc(logger, value)
-		printFunc(value.Message)
+	return func(log *Log) bool {
+		printFunc := getStdPrintFunc(logger, log)
+		printFunc(log.Message)
 		return true
 	}
 }
 
-func getStdPrintFunc(logger StdLogger, value Log) func(...interface{}) {
+func getStdPrintFunc(logger StdLogger, log *Log) func(...interface{}) {
 	// no levels here
 
 	// passed with Println
-	if value.NewLine {
+	if log.NewLine {
 		return logger.Println
 	}
 

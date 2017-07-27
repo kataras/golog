@@ -22,7 +22,7 @@ import (
 //
 // It stops on the handler which returns true firstly.
 // The `Log` value holds the level of the print operation as well.
-type Handler func(value Log) (handled bool)
+type Handler func(value *Log) (handled bool)
 
 // Logger is our golog.
 type Logger struct {
@@ -32,40 +32,73 @@ type Logger struct {
 	Printer    *pio.Printer
 	handlers   []Handler
 	once       sync.Once
+	logs       sync.Pool
 }
 
 // New returns a new golog, default Level is `InfoLevel`.
 func New() *Logger {
-	gologger := &Logger{
+	return &Logger{
 		Level:      InfoLevel,
 		TimeFormat: "2006/01/02 15:04",
-		Printer:    pio.NewPrinter("", os.Stderr).Hijack(logHijacker),
+		Printer:    pio.NewPrinter("", os.Stderr).EnableDirectOutput().Hijack(logHijacker),
 	}
-	// gologger.api = gologger
-	return gologger
+}
+
+// acquireLog returns a new log fom the pool.
+func (l *Logger) acquireLog(level Level, msg string, withPrintln bool) *Log {
+	log, ok := l.logs.Get().(*Log)
+	if !ok {
+		log = &Log{
+			Logger: l,
+		}
+	}
+	log.NewLine = withPrintln
+	log.Time = time.Now()
+	log.Level = level
+	log.Message = msg
+	return log
+}
+
+// releaseLog Log releases a log instance back to the pool.
+func (l *Logger) releaseLog(log *Log) {
+	l.logs.Put(log)
 }
 
 // we could use marshal inside Log but we don't have access to printer,
 // we could also use the .Handle with NopOutput too but
 // this way is faster:
 var logHijacker = func(ctx *pio.Ctx) {
-	l, ok := ctx.Value.(Log)
-	defer ctx.Next()
+	l, ok := ctx.Value.(*Log)
 	if !ok {
+		ctx.Next()
 		return
 	}
 
-	prefix := prefixFromLevel(l.Level, ctx.Printer.IsTerminal)
-	if prefix != "" {
-		prefix += " "
-	}
+	// prefix := prefixFromLevel(l.Level, ctx.Printer.IsTerminal)
+	// if prefix != "" {
+	// 	prefix += " "
+	// }
 
-	formattedTime := l.FormatTime()
-	if formattedTime != "" {
-		formattedTime += " "
+	// formattedTime := l.FormatTime()
+	// if formattedTime != "" {
+	// 	formattedTime += " "
+	// }
+	// // edw adi gia sprintf na to kanw me aplo string kai na ksanatreksw ta benchmarks
+	// // eixe 4k ns (sto travis) tin prigoumenh fora
+	// ctx.Store([]byte(fmt.Sprintf("%s%s%s", prefix, formattedTime, l.Message)), nil)
+	line := prefixFromLevel(l.Level, ctx.Printer.IsTerminal)
+	if line != "" {
+		line += " "
 	}
-
-	ctx.Store([]byte(fmt.Sprintf("%s%s%s", prefix, formattedTime, l.Message)), nil)
+	if t := l.FormatTime(); t != "" {
+		line += t + " "
+	}
+	line += l.Message
+	if l.NewLine {
+		line += "\n"
+	}
+	ctx.Store([]byte(line), nil)
+	ctx.Next()
 }
 
 // NopOutput disables the output.
@@ -114,7 +147,7 @@ func (l *Logger) print(level Level, msg string, newLine bool) {
 		// newLine passed here in order for handler to know
 		// if this message derives from Println and Leveled functions
 		// or by simply, Print.
-		log := acquireLog(level, msg, newLine, l.TimeFormat)
+		log := l.acquireLog(level, msg, newLine)
 		// if not handled by one of the handler
 		// then print it as usual.
 		if !l.handled(log) {
@@ -125,7 +158,7 @@ func (l *Logger) print(level Level, msg string, newLine bool) {
 			}
 		}
 
-		releaseLog(log)
+		l.releaseLog(log)
 	}
 }
 
@@ -233,7 +266,7 @@ func (l *Logger) Handle(handler Handler) {
 	l.mu.Unlock()
 }
 
-func (l *Logger) handled(value Log) (handled bool) {
+func (l *Logger) handled(value *Log) (handled bool) {
 	for _, h := range l.handlers {
 		if h(value) {
 			return true
