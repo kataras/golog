@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/kataras/pio"
 )
@@ -30,6 +31,7 @@ type Logger struct {
 	mu         sync.Mutex
 	Printer    *pio.Printer
 	handlers   []Handler
+	once       sync.Once
 }
 
 // New returns a new golog, default Level is `InfoLevel`.
@@ -48,8 +50,8 @@ func New() *Logger {
 // this way is faster:
 var logHijacker = func(ctx *pio.Ctx) {
 	l, ok := ctx.Value.(Log)
+	defer ctx.Next()
 	if !ok {
-		ctx.Cancel()
 		return
 	}
 
@@ -64,15 +66,22 @@ var logHijacker = func(ctx *pio.Ctx) {
 	}
 
 	ctx.Store([]byte(fmt.Sprintf("%s%s%s", prefix, formattedTime, l.Message)), nil)
-	ctx.Next()
 }
 
 // NopOutput disables the output.
 var NopOutput = pio.NopOutput()
 
-// SetOutput overrides the Printer's output with another `io.Writer`.
+// SetOutput overrides the Logger's Printer's Output with another `io.Writer`.
 func (l *Logger) SetOutput(w io.Writer) {
 	l.Printer.SetOutput(w)
+}
+
+// AddOutput adds one or more `io.Writer` to the Logger's Printer.
+//
+// If one of the "writers" is not a terminal-based (i.e File)
+// then colors will be disabled for all outputs.
+func (l *Logger) AddOutput(writers ...io.Writer) {
+	l.Printer.AddOutput(writers...)
 }
 
 // SetTimeFormat sets time format for logs,
@@ -238,4 +247,40 @@ func (l *Logger) handled(value Log) (handled bool) {
 // then you have to make use of the pio library.
 func (l *Logger) Hijack(hijacker func(ctx *pio.Ctx)) {
 	l.Printer.Hijack(hijacker)
+}
+
+// Scan scans everything from "r" and prints
+// its new contents to the logger's Printer's Output,
+// forever or until the returning "cancel" is fired, once.
+func (l *Logger) Scan(r io.Reader) (cancel func()) {
+	l.once.Do(func() {
+		// add a marshaler once
+		// in order to handle []byte and string
+		// as its input.
+		// Because scan doesn't care about
+		// logging levels (because of the io.Reader)
+		// Note: We don't use the `pio.Text` built'n marshaler
+		// because we want to manage time log too.
+		l.Printer.MarshalFunc(func(v interface{}) ([]byte, error) {
+			var line []byte
+			if b, ok := v.([]byte); ok {
+				line = b
+			} else if s, ok := v.(string); ok {
+				line = []byte(s)
+			}
+
+			if len(line) == 0 {
+				return nil, pio.ErrMarshalNotResponsible
+			}
+
+			formattedTime := time.Now().Format(l.TimeFormat)
+			if formattedTime != "" {
+				line = append([]byte(formattedTime+" "), line...)
+			}
+
+			return line, nil
+		})
+	})
+
+	return l.Printer.Scan(r, true)
 }

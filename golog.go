@@ -15,9 +15,17 @@ func Reset() {
 	Default = New()
 }
 
-// SetOutput overrides the Printer's output with another `io.Writer`.
+// SetOutput overrides the Default Logger's Printer's output with another `io.Writer`.
 func SetOutput(w io.Writer) {
 	Default.SetOutput(w)
+}
+
+// AddOutput adds one or more `io.Writer` to the Default Logger's Printer.
+//
+// If one of the "writers" is not a terminal-based (i.e File)
+// then colors will be disabled for all outputs.
+func AddOutput(writers ...io.Writer) {
+	Default.AddOutput(writers...)
 }
 
 // SetTimeFormat sets time format for logs,
@@ -144,4 +152,11 @@ func Handle(handler Handler) {
 // then you have to make use of the pio library.
 func Hijack(hijacker func(ctx *pio.Ctx)) {
 	Default.Hijack(hijacker)
+}
+
+// Scan scans everything from "r" and prints
+// its new contents to the logger's Printer's Output,
+// forever or until the returning "cancel" is fired, once.
+func Scan(r io.Reader) (cancel func()) {
+	return Default.Scan(r)
 }
