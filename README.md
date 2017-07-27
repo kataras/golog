@@ -12,7 +12,7 @@ _golog_ is a simple, fast and easy-to-use level-based logger written entirely in
 2. it can use more than one output
 3. its output writer can be overridden by any third-party logger
 4. colors and levels such as `error`, `warn`, `info`, `debug` or `disable`
-5. incredible high-performant, two times faster than logrus
+5. incredible high-performant, 3+ times faster than logrus
 
 Navigate through [_examples](_examples/) and [integrations](_examples/integrations/) to learn if that fair solution suits your needs.
 
@@ -65,8 +65,8 @@ $ go run main.go
 
 | test | times ran (large is better) |  ns/op (small is better) | B/op (small is better) | allocs/op (small is better) |
 | -----------|--------|-------------|-------------|-------------|
-| **BenchmarkGologPrint** | 2000000 | 3918 ns/op | 1069 B/op | 32 allocs/op |
-| BenchmarkLogrusPrint | 1000000 | 9178 ns/op | 1594 B/op | 64 allocs/op |
+| **BenchmarkGologPrint** | 10000000 | 4032 ns/op | 1082 B/op | 32 allocs/op |
+| BenchmarkLogrusPrint | &nbsp; 3000000 | 9421 ns/op | 1611 B/op | 64 allocs/op |
 
 Click [here](_benchmarks) for details.
 
