@@ -5,14 +5,21 @@ _golog_ is a simple, fast and easy-to-use level-based logger written entirely in
 [![build status](https://img.shields.io/travis/kataras/golog/master.svg?style=flat-square)](https://travis-ci.org/kataras/golog)
 [![report card](https://img.shields.io/badge/report%20card-a%2B-ff3333.svg?style=flat-square)](http://goreportcard.com/report/kataras/golog)
 [![godocs](https://img.shields.io/badge/online-documentation-0366d6.svg?style=flat-square)](https://godoc.org/github.com/kataras/golog)
-[![github issues](https://img.shields.io/github/issues/kataras/golog.svg)](https://github.com/kataras/golog/issues?q=is%3Aopen+is%3Aissue)
-[![github closed issues](https://img.shields.io/github/issues-closed/kataras/golog.svg)](https://github.com/kataras/golog/issues?q=is%3Aissue+is%3Aclosed)
+[![github issues](https://img.shields.io/github/issues/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues?q=is%3Aopen+is%3Aissue)
+[![issue stats](https://img.shields.io/issuestats/i/github/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues)
 
-1. it can scan from sources and log them 
-2. it can use more than one output
-3. its output writer can be overridden by any third-party logger
-4. colors and levels such as `error`, `warn`, `info`, `debug` or `disable`
-5. incredible high-performant, 3+ times faster than logrus
+### 🥇 Features
+
+* Focus on high performance and agile perspective of things
+* Easy API and a default package-level instance, i.e `golog#Errorf/Warnf/Infof/Debugf`
+* Fully compatible with the standard library
+* Thanks to the [pio library](https://github.com/kataras/pio) it supports any type of structure, gives you the ability to `Hijack` and `Handle` or `Intercept` the on-going logs too 
+* Set or even Add unlimited number of output targets, `io.Writer`
+* Scan from any `io.Reader` and log to the defined output target(s)
+* Levels such as `error`, `warn`, `info`, `debug`, or `disable`
+* Beautiful colors for leveled logs, automatically omit colors when output does not support colors (i.e files)
+* Incredible high-performant, 3 times faster than your favourite logger
+* Never-Panics
 
 Navigate through [_examples](_examples/) and [integrations](_examples/integrations/) to learn if that fair solution suits your needs.
 
