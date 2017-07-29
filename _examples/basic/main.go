@@ -5,9 +5,9 @@ import (
 )
 
 func main() {
-	// Default Output is `os.Stderr`,
+	// Default Output is `os.Stdout`,
 	// but you can change it:
-	// golog.SetOutput(os.Stdout)
+	// golog.SetOutput(os.Stderr)
 
 	// Time Format defaults to: "2006/01/02 15:04"
 	// you can change it to something else or disable it with:

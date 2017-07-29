@@ -35,12 +35,13 @@ type Logger struct {
 	logs       sync.Pool
 }
 
-// New returns a new golog, default Level is `InfoLevel`.
+// New returns a new golog with a default output to `os.Stdout`
+// and level to `InfoLevel`.
 func New() *Logger {
 	return &Logger{
 		Level:      InfoLevel,
 		TimeFormat: "2006/01/02 15:04",
-		Printer:    pio.NewPrinter("", os.Stderr).EnableDirectOutput().Hijack(logHijacker),
+		Printer:    pio.NewPrinter("", os.Stdout).EnableDirectOutput().Hijack(logHijacker),
 	}
 }
 
@@ -74,7 +75,7 @@ var logHijacker = func(ctx *pio.Ctx) {
 		return
 	}
 
-	line := prefixFromLevel(l.Level, ctx.Printer.IsTerminal)
+	line := GetTextForLevel(l.Level, ctx.Printer.IsTerminal)
 	if line != "" {
 		line += " "
 	}

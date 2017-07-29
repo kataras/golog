@@ -36,7 +36,7 @@ Source code and other details for the project are available at GitHub:
 
 Current Version
 
-0.0.4
+0.0.5
 
 Installation
 
@@ -57,9 +57,9 @@ Example code:
 	)
 
 	func main() {
-		// Default Output is `os.Stderr`,
+		// Default Output is `os.Stdout`,
 		// but you can change it:
-		// golog.SetOutput(os.Stdout)
+		// golog.SetOutput(os.Stderr)
 
 		// Time Format defaults to: "2006/01/02 15:04"
 		// you can change it to something else or disable it with:
@@ -96,9 +96,9 @@ Example Code:
 	func main() {
 		log := golog.New()
 
-		// Default Output is `os.Stderr`,
+		// Default Output is `os.Stdout`,
 		// but you can change it:
-		// log.SetOutput(os.Stdout)
+		// log.SetOutput(os.Stderr)
 
 		// Level defaults to "info",
 		// but you can change it:
@@ -160,6 +160,47 @@ Available levels are:
 	InfoLevel
 	// DebugLevel will print on any level, errors, warnings, infos and debug messages
 	DebugLevel
+
+The default colorful text(or raw text for unsupported outputs) for levels
+can be overridden by using the `golog#ErrorText, golog#WarnText, golog#InfoText and golog#DebugText`
+functions.
+
+Example Code:
+
+	package main
+
+	import (
+		"github.com/kataras/golog"
+	)
+
+	func main() {
+
+		// First argument is the raw text for outputs
+		// that are not support colors,
+		// second argument is the full colorful text (yes it can be different if you wish to).
+		//
+		// If the second argument is empty then golog will update the colorful text to the
+		// default color (i.e red on ErrorText) based on the first argument.
+
+		// Default is "[ERRO]"
+		golog.ErrorText("|ERROR|", "")
+		// Default is "[WARN]"
+		golog.WarnText("|WARN|", "")
+		// Default is "[INFO]"
+		golog.InfoText("|INFO|", "")
+		// Default is "[DBUG]"
+		golog.DebugText("|DEBUG|", "")
+
+		// Business as usual...
+		golog.SetLevel("debug")
+
+		golog.Println("This is a raw message, no levels, no colors.")
+		golog.Info("This is an info message, with colors (if the output is terminal)")
+		golog.Warn("This is a warning message")
+		golog.Error("This is an error message")
+		golog.Debug("This is a debug message")
+	}
+
 
 
 The logger's level can be changed via passing one of the
@@ -303,4 +344,4 @@ Examples:
 package golog // import "github.com/kataras/golog"
 
 // Version is the version string representation of the "golog" package.
-const Version = "0.0.4"
+const Version = "0.0.5"

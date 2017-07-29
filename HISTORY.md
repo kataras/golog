@@ -1,8 +1,55 @@
-## Sa 29 July 2017 | v0.0.4
+## Sa 29 July 2017 | v0.0.4 & v0.0.5
 
-Fix an issue occured by previous chnages, which [pio](https://github.com/kataras/pio) appends a trailing new line.
+### v0.0.4
+- Fix an issue occurred by previous chnages, which [pio](https://github.com/kataras/pio) appends a trailing new line.
 
-Add a new method `golog#NewLine` which can override the default line breaker chars "\n".
+- Add a new method `golog#NewLine` which can override the default line breaker chars "\n".
+
+### v0.0.5
+
+Default output is `os.Stdout` instead of `os.Stderr` now, you can change it by `golog#SetOutput`.
+
+Users are now able to customize both raw and colorful leveled log messages' prefix, example below.
+
+Example Code:
+
+```go
+package main
+
+import (
+    "github.com/kataras/golog"
+)
+
+func main() {
+
+    // First argument is the raw text for outputs
+    // that are not support colors,
+    // second argument is the full colorful text (yes it can be different if you wish to).
+    //
+    // If the second argument is empty then golog will update the colorful text to the
+    // default color (i.e red on ErrorText) based on the first argument.
+
+    // Default is "[ERRO]"
+    golog.ErrorText("|ERROR|", "")
+    // Default is "[WARN]"
+    golog.WarnText("|WARN|", "")
+    // Default is "[INFO]"
+    golog.InfoText("|INFO|", "")
+    // Default is "[DBUG]"
+    golog.DebugText("|DEBUG|", "")
+
+    // Business as usual...
+    golog.SetLevel("debug")
+
+    golog.Println("This is a raw message, no levels, no colors.")
+    golog.Info("This is an info message, with colors (if the output is terminal)")
+    golog.Warn("This is a warning message")
+    golog.Error("This is an error message")
+    golog.Debug("This is a debug message")
+}
+```
+
+> This feature has been implemented after @carlca 's suggestion, [here](https://github.com/kataras/golog/issues/2).
 
 
 ## Th 27 July 2017 | v0.0.3

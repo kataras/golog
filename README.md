@@ -17,7 +17,7 @@ _golog_ is a simple, fast and easy-to-use level-based logger written entirely in
 * Set or even Add unlimited number of output targets, `io.Writer`
 * Scan from any `io.Reader` and log to the defined output target(s)
 * Levels such as `error`, `warn`, `info`, `debug`, or `disable`
-* Beautiful colors for leveled logs, automatically omit colors when output does not support colors (i.e files)
+* Beautiful (**customizable**) colors for leveled logs, automatically omit colors when output does not support colors (i.e files)
 * Incredible high-performant, 3 times faster than your favourite logger
 * Never-Panics
 
@@ -41,9 +41,9 @@ import (
 )
 
 func main() {
-    // Default Output is `os.Stderr`,
+    // Default Output is `os.Stdout`,
     // but you can change it:
-    // golog.SetOutput(os.Stdout)
+    // golog.SetOutput(os.Stderr)
     
     // Time Format defaults to: "2006/01/02 15:04"
     // you can change it to something else or disable it with:
