@@ -6,6 +6,14 @@ import (
 	"github.com/kataras/pio"
 )
 
+// NewLine can override the default package-level line breaker, "\n".
+// It should be called (in-sync) before  the print or leveled functions.
+//
+// See `github.com/kataras/pio#NewLine` too.
+func NewLine(newLineChar string) {
+	pio.NewLine = []byte(newLineChar)
+}
+
 // Default is the package-level ready-to-use logger,
 // level had set to "info", is changeable.
 var Default = New()

@@ -18,7 +18,7 @@ type Log struct {
 	// derives from a `Print` function,
 	// otherwise true if derives from a `Println`, `Error`, `Errorf`, `Warn`, etc...
 	//
-	// This NewLine does not mean that `Message` ends with "\n".
+	// This NewLine does not mean that `Message` ends with "\n" (or `pio#NewLine`).
 	// NewLine has to do with the methods called,
 	// not the original content of the `Message`.
 	NewLine bool

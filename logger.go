@@ -74,18 +74,6 @@ var logHijacker = func(ctx *pio.Ctx) {
 		return
 	}
 
-	// prefix := prefixFromLevel(l.Level, ctx.Printer.IsTerminal)
-	// if prefix != "" {
-	// 	prefix += " "
-	// }
-
-	// formattedTime := l.FormatTime()
-	// if formattedTime != "" {
-	// 	formattedTime += " "
-	// }
-	// // edw adi gia sprintf na to kanw me aplo string kai na ksanatreksw ta benchmarks
-	// // eixe 4k ns (sto travis) tin prigoumenh fora
-	// ctx.Store([]byte(fmt.Sprintf("%s%s%s", prefix, formattedTime, l.Message)), nil)
 	line := prefixFromLevel(l.Level, ctx.Printer.IsTerminal)
 	if line != "" {
 		line += " "
@@ -94,9 +82,6 @@ var logHijacker = func(ctx *pio.Ctx) {
 		line += t + " "
 	}
 	line += l.Message
-	if l.NewLine {
-		line += "\n"
-	}
 	ctx.Store([]byte(line), nil)
 	ctx.Next()
 }

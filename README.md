@@ -25,6 +25,8 @@ Navigate through [_examples](_examples/) and [integrations](_examples/integratio
 
 ### 🚀 Installation
 
+The only requirement is the Go Programming Language[*](https://golang.org).
+
 ```bash
 $ go get github.com/kataras/golog
 ```

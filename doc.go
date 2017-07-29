@@ -36,11 +36,11 @@ Source code and other details for the project are available at GitHub:
 
 Current Version
 
-0.0.3
+0.0.4
 
 Installation
 
-The only requirement is the Go Programming Language, at least version 1.8
+The only requirement is the Go Programming Language
 
     $ go get -u github.com/kataras/golog
 
@@ -134,6 +134,13 @@ Golog takes a simple `io.Writer` as its underline Printer's Output.
 Example Code:
 
 	golog.SetOutput(io.Writer)
+
+
+You can even override the default line braker, "\n", by using the `golog#NewLine` function at startup.
+
+Example Code:
+
+	golog.NewLine("\r\n")
 
 
 Levels
@@ -296,4 +303,4 @@ Examples:
 package golog // import "github.com/kataras/golog"
 
 // Version is the version string representation of the "golog" package.
-const Version = "0.0.3"
+const Version = "0.0.4"
