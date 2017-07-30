@@ -2,11 +2,13 @@
 
 _golog_ is a simple, fast and easy-to-use level-based logger written entirely in [GoLang](https://golang.org).
 
+[![benchmarks_30_jul_2017](_benchmarks/cmd.png)](_benchmarks)
+
 [![build status](https://img.shields.io/travis/kataras/golog/master.svg?style=flat-square)](https://travis-ci.org/kataras/golog)
 [![report card](https://img.shields.io/badge/report%20card-a%2B-ff3333.svg?style=flat-square)](http://goreportcard.com/report/kataras/golog)
 [![godocs](https://img.shields.io/badge/online-documentation-0366d6.svg?style=flat-square)](https://godoc.org/github.com/kataras/golog)
 [![github issues](https://img.shields.io/github/issues/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues?q=is%3Aopen+is%3Aissue)
-[![issue stats](https://img.shields.io/issuestats/i/github/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues)
+<!-- [![issue stats](https://img.shields.io/issuestats/i/github/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues) -->
 
 ### 🥇 Features
 
@@ -74,8 +76,8 @@ $ go run main.go
 
 | test | times ran (large is better) |  ns/op (small is better) | B/op (small is better) | allocs/op (small is better) |
 | -----------|--------|-------------|-------------|-------------|
-| **BenchmarkGologPrint** | 10000000 | 4032 ns/op | 1082 B/op | 32 allocs/op |
-| BenchmarkLogrusPrint | &nbsp; 3000000 | 9421 ns/op | 1611 B/op | 64 allocs/op |
+| **BenchmarkGologPrint** | 10000000 | 3749 ns/op | 890 B/op | 28 allocs/op |
+| BenchmarkLogrusPrint | &nbsp; 3000000 | 9609 ns/op | 1611 B/op | 64 allocs/op |
 
 Click [here](_benchmarks) for details.
 
@@ -90,3 +92,7 @@ If you find that something is not working as expected please open an [issue](htt
 | [iris](https://github.com/kataras/iris) | [Gerasimos Maropoulos](https://github.com/kataras) | The fastest web framework for Go in (THIS) Earth. HTTP/2 Ready-To-GO. Mobile Ready-To-GO. |
 
 > Do not hesitate to put your package on this list via [PR](https://github.com/kataras/golog/pulls)!
+
+### ⚽ TODO
+
+- [ ] Implement a way to be able to add custom levels with the full power of the built'n levels

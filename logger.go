@@ -26,6 +26,7 @@ type Handler func(value *Log) (handled bool)
 
 // Logger is our golog.
 type Logger struct {
+	Prefix     []byte
 	Level      Level
 	TimeFormat string
 	mu         sync.Mutex
@@ -33,6 +34,7 @@ type Logger struct {
 	handlers   []Handler
 	once       sync.Once
 	logs       sync.Pool
+	children   *loggerMap
 }
 
 // New returns a new golog with a default output to `os.Stdout`
@@ -42,6 +44,7 @@ func New() *Logger {
 		Level:      InfoLevel,
 		TimeFormat: "2006/01/02 15:04",
 		Printer:    pio.NewPrinter("", os.Stdout).EnableDirectOutput().Hijack(logHijacker),
+		children:   newLoggerMap(),
 	}
 }
 
@@ -79,11 +82,20 @@ var logHijacker = func(ctx *pio.Ctx) {
 	if line != "" {
 		line += " "
 	}
+
 	if t := l.FormatTime(); t != "" {
 		line += t + " "
 	}
 	line += l.Message
-	ctx.Store([]byte(line), nil)
+
+	var b []byte
+	if pref := l.Logger.Prefix; len(pref) > 0 {
+		b = append(pref, []byte(line)...)
+	} else {
+		b = []byte(line)
+	}
+
+	ctx.Store(b, nil)
 	ctx.Next()
 }
 
@@ -101,6 +113,20 @@ func (l *Logger) SetOutput(w io.Writer) {
 // then colors will be disabled for all outputs.
 func (l *Logger) AddOutput(writers ...io.Writer) {
 	l.Printer.AddOutput(writers...)
+}
+
+// SetPrefix sets a prefix for this "l" Logger.
+//
+// The prefix is the first space-separated
+// word that is being presented to the output.
+// It's written even before the log level text.
+//
+// Returns itself.
+func (l *Logger) SetPrefix(s string) *Logger {
+	l.mu.Lock()
+	l.Prefix = []byte(s)
+	l.mu.Unlock()
+	return l
 }
 
 // SetTimeFormat sets time format for logs,
@@ -159,9 +185,24 @@ func (l *Logger) Println(v ...interface{}) {
 	l.print(DisableLevel, fmt.Sprint(v...), true)
 }
 
+// Log prints a leveled log message to the output.
+// This method can be used to use custom log levels if needed.
+// It adds a new line in the end.
+func (l *Logger) Log(level Level, v ...interface{}) {
+	l.print(level, fmt.Sprint(v...), true)
+}
+
+// Logf prints a leveled log message to the output.
+// This method can be used to use custom log levels if needed.
+// It adds a new line in the end.
+func (l *Logger) Logf(level Level, format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	l.Log(level, msg)
+}
+
 // Error will print only when logger's Level is error.
 func (l *Logger) Error(v ...interface{}) {
-	l.print(ErrorLevel, fmt.Sprint(v...), true)
+	l.Log(ErrorLevel, v...)
 }
 
 // Errorf will print only when logger's Level is error.
@@ -172,7 +213,7 @@ func (l *Logger) Errorf(format string, args ...interface{}) {
 
 // Warn will print when logger's Level is error, or warning.
 func (l *Logger) Warn(v ...interface{}) {
-	l.print(WarnLevel, fmt.Sprint(v...), true)
+	l.Log(WarnLevel, v...)
 }
 
 // Warnf will print when logger's Level is error, or warning.
@@ -183,7 +224,7 @@ func (l *Logger) Warnf(format string, args ...interface{}) {
 
 // Info will print when logger's Level is error, warning or info.
 func (l *Logger) Info(v ...interface{}) {
-	l.print(InfoLevel, fmt.Sprint(v...), true)
+	l.Log(InfoLevel, v...)
 }
 
 // Infof will print when logger's Level is error, warning or info.
@@ -194,7 +235,7 @@ func (l *Logger) Infof(format string, args ...interface{}) {
 
 // Debug will print when logger's Level is error, warning,info or debug.
 func (l *Logger) Debug(v ...interface{}) {
-	l.print(DebugLevel, fmt.Sprint(v...), true)
+	l.Log(DebugLevel, v...)
 }
 
 // Debugf will print when logger's Level is error, warning,info or debug.
@@ -302,4 +343,62 @@ func (l *Logger) Scan(r io.Reader) (cancel func()) {
 	})
 
 	return l.Printer.Scan(r, true)
+}
+
+// Clone returns a copy of this "l" Logger.
+// This copy is returned as pointer as well.
+func (l *Logger) Clone() *Logger {
+	return &Logger{
+		Prefix:     l.Prefix,
+		Level:      l.Level,
+		TimeFormat: l.TimeFormat,
+		Printer:    l.Printer,
+		handlers:   l.handlers,
+		children:   newLoggerMap(),
+		mu:         sync.Mutex{},
+		once:       sync.Once{},
+	}
+}
+
+// Child (creates if not exists and) returns a new child
+// Logger based on the "l"'s fields.
+//
+// Can be used to separate logs by category.
+func (l *Logger) Child(name string) *Logger {
+	return l.children.getOrAdd(name, l)
+}
+
+type loggerMap struct {
+	mu    sync.RWMutex
+	Items map[string]*Logger
+}
+
+func newLoggerMap() *loggerMap {
+	return &loggerMap{
+		Items: make(map[string]*Logger),
+	}
+}
+
+func (m *loggerMap) getOrAdd(name string, parent *Logger) *Logger {
+	m.mu.RLock()
+	logger, ok := m.Items[name]
+	m.mu.RUnlock()
+	if ok {
+		return logger
+	}
+
+	logger = parent.Clone()
+	prefix := name
+
+	// if prefix doesn't end with a whitespace, then add it here.
+	if lb := name[len(prefix)-1]; lb != ' ' {
+		prefix += ": "
+	}
+
+	logger.SetPrefix(prefix)
+	m.mu.Lock()
+	m.Items[name] = logger
+	m.mu.Unlock()
+
+	return logger
 }

@@ -1,3 +1,28 @@
+## Su 30 July 2017 | v0.0.6
+
+Add a `SetPrefix(string)` and `Child(string) *Logger`.
+
+Default package-level logger
+```go
+// automatically prefixed as "Router: "
+golog.Child("Router").Errorf("Route %s already exists", "/mypath")
+// able to prefix the main logger or child 
+golog.Child("Server").SetPrefix("HTTP Server: ").Infof("Server is running at %s", ":8080")
+// Child does return a new *Logger based on its parent
+srvLogger := golog.Child("Server")
+```
+
+Same for independent instances
+```go
+log := golog.New()
+log.SetPrefix("App#1: ")
+
+routerLogger := log.Child("Router")
+routerLogger.Errorf("Route %s already exists", "/mypath")
+```
+
+Example can be found [here](_examples/child/main.go).
+
 ## Sa 29 July 2017 | v0.0.4 & v0.0.5
 
 ### v0.0.4

@@ -36,6 +36,17 @@ func AddOutput(writers ...io.Writer) {
 	Default.AddOutput(writers...)
 }
 
+// SetPrefix sets a prefix for the default package-level Logger.
+//
+// The prefix is the first space-separated
+// word that is being presented to the output.
+// It's written even before the log level text.
+//
+// Returns itself.
+func SetPrefix(s string) *Logger {
+	return Default.SetPrefix(s)
+}
+
 // SetTimeFormat sets time format for logs,
 // if "s" is empty then time representation will be off.
 func SetTimeFormat(s string) {
@@ -167,4 +178,12 @@ func Hijack(hijacker func(ctx *pio.Ctx)) {
 // forever or until the returning "cancel" is fired, once.
 func Scan(r io.Reader) (cancel func()) {
 	return Default.Scan(r)
+}
+
+// Child (creates if not exists and) returns a new child
+// Logger based on the default package-level logger instance.
+//
+// Can be used to separate logs by category.
+func Child(name string) *Logger {
+	return Default.Child(name)
 }

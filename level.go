@@ -4,6 +4,18 @@ import (
 	"github.com/kataras/pio"
 )
 
+/// TODO: LevelMetadata should contains
+// the text, the colorful text, the name
+// and the actual level which will be the key of the map.
+//
+// var Levels map[Level]string {
+// 	DisableLevel,
+// 	ErrorLevel,
+// 	WarnLevel,
+// 	InfoLevel,
+// 	DebugLevel,
+// }
+
 // Level is a number which defines the log level.
 type Level uint32
 
