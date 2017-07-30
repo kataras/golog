@@ -95,4 +95,4 @@ If you find that something is not working as expected please open an [issue](htt
 
 ### ⚽ TODO
 
-- [ ] Implement a way to be able to add custom levels with the full power of the built'n levels
+- [x] Implement a way to be able to add custom levels with the full power of the built'n levels[*](HISTORY.md#su-30-july-2017-v006-v007)

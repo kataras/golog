@@ -79,6 +79,13 @@ func Println(v ...interface{}) {
 	Default.Println(v...)
 }
 
+// Logf prints a leveled log message to the output.
+// This method can be used to use custom log levels if needed.
+// It adds a new line in the end.
+func Logf(level Level, format string, args ...interface{}) {
+	Default.Logf(level, format, args...)
+}
+
 // Error will print only when logger's Level is error.
 func Error(v ...interface{}) {
 	Default.Error(v...)

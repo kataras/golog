@@ -1,25 +1,15 @@
 package golog
 
 import (
+	"strings"
+
 	"github.com/kataras/pio"
 )
-
-/// TODO: LevelMetadata should contains
-// the text, the colorful text, the name
-// and the actual level which will be the key of the map.
-//
-// var Levels map[Level]string {
-// 	DisableLevel,
-// 	ErrorLevel,
-// 	WarnLevel,
-// 	InfoLevel,
-// 	DebugLevel,
-// }
 
 // Level is a number which defines the log level.
 type Level uint32
 
-// The available log levels.
+// The available built'n log levels, users can add or modify a level via `Levels` field.
 const (
 	// DisableLevel will disable printer
 	DisableLevel Level = iota
@@ -33,133 +23,142 @@ const (
 	DebugLevel
 )
 
+// Levels contains the levels and their
+// mapped (pointer of, in order to be able to be modified) metadata, callers
+// are allowed to modify this package-level global variable
+// without any loses.
+var Levels = map[Level]*LevelMetadata{
+	DisableLevel: {
+		Name:         "disabled",
+		RawText:      "",
+		ColorfulText: "",
+	},
+	ErrorLevel: {
+		Name:         "error",
+		RawText:      "[ERRO]",
+		ColorfulText: pio.Red("[ERRO]"),
+	},
+	WarnLevel: {
+		Name:         "warn",
+		RawText:      "[WARN]",
+		ColorfulText: pio.Purple("[WARN]"),
+	},
+	InfoLevel: {
+		Name:         "info",
+		RawText:      "[INFO]",
+		ColorfulText: pio.LightGreen("[INFO]"),
+	},
+	DebugLevel: {
+		Name:         "debug",
+		RawText:      "[DBUG]",
+		ColorfulText: pio.Yellow("[DBUG]"),
+	},
+}
+
 func fromLevelName(levelName string) Level {
-	switch levelName {
-	case "error":
-		return ErrorLevel
-	case "warning":
-		fallthrough
-	case "warn":
-		return WarnLevel
-	case "info":
-		return InfoLevel
-	case "debug":
-		return DebugLevel
-	default:
-		return DisableLevel
+	for level, meta := range Levels {
+		if meta.Name == levelName {
+			return level
+		}
 	}
+	return DisableLevel
+}
+
+// LevelMetadata describes the information
+// behind a log Level, each level has its own unique metadata.
+type LevelMetadata struct {
+	// The Name of the Level
+	// that named (lowercased) will be used
+	// to convert a string level on `SetLevel`
+	// to the correct Level type.
+	Name string
+	// Tha RawText will be the prefix of the log level
+	// when output doesn't supports colors.
+	//
+	// When RawText is changed its ColorfulText is also changed
+	// to a default color, but callers are able to change it too.
+	RawText string
+	// The ColorfulText will be the prefix of the log level
+	// when output supports colors, almost everything except
+	// os files and putty-based terminals(?).
+	//
+	// If ColorfulText is empty then built'n colors
+	// are being used to wrap the "RawText".
+	ColorfulText string
+}
+
+// Text returns the text that should be
+// prepended to the log message when a specific
+// log level is being written.
+func (m *LevelMetadata) Text(enableColor bool) string {
+	if enableColor {
+		return m.ColorfulText
+	}
+	return m.RawText
+}
+
+// SetText can modify the prefix that will be prepended
+// to the output message log when `Error/Errorf` functions are being used.
+//
+// If "newRawText" is empty then it will just skip the Text set-ing.
+// If "newColorfulText" is empty then it will update the text color version using
+// the default values by using the new raw text.
+func (m *LevelMetadata) SetText(newRawText string, newColorfulText string) {
+	if newRawText != "" {
+		oldRawText := m.RawText
+		m.RawText = newRawText
+		m.ColorfulText = strings.Replace(m.ColorfulText, oldRawText, newRawText, -1)
+	}
+	if newColorfulText != "" {
+		m.ColorfulText = newColorfulText
+	}
+
 }
 
 var (
-
-	// Author's note:
-	// Here I choose to apply the below pattern of modifying the raw text and the colorful text
-	// for performance reasons, we could just create the GetTextForLevel to generate
-	// the colors on-the-fly or add a sync.Once but both of these would reduce our performance.
-
-	errorText = "[ERRO]"
-	// errorTextWithColor is the color that will be printed
-	// when Error/Errorf functions are being used, if `Printer#IsTerminal` is true.
-	//
-	// Defaults to a red color.
-	errorTextWithColor = pio.Red(errorText)
 	// ErrorText can modify the prefix that will be prepended
 	// to the output message log when `Error/Errorf` functions are being used.
 	//
-	// If "newRawText" is empty then it will just return the current prefix string value.
 	// If "newColorfulText" is empty then it will update the text color version using
 	// the default values by using the new raw text.
 	//
 	// Defaults to "[ERRO]" and pio.Red("[ERRO]").
-	ErrorText = func(newRawText string, newColorfulText string) (oldRawText string) {
-		oldRawText = errorText
-		if newRawText != "" {
-			errorText = newRawText
-			errorTextWithColor = pio.Red(newRawText)
-		}
-		if newColorfulText != "" {
-			errorTextWithColor = newColorfulText
-		}
-		return
-	}
-
-	warnText = "[WARN]"
-	// warnTextWithColor is the color that will be printed
-	// when Warn/Warnf functions are being used, if `Printer#IsTerminal` is true.
 	//
-	// Defaults to a purplish color.
-	warnTextWithColor = pio.Purple(warnText)
+	// Deprecated Use `Levels[ErrorLevel].SetText(string, string)` instead.
+	ErrorText = Levels[ErrorLevel].SetText
+
 	// WarnText can modify the prefix that will be prepended
 	// to the output message log when `Warn/Warnf` functions are being used.
 	//
-	// If "newRawText" is empty then it will just return the current prefix string value.
 	// If "newColorfulText" is empty then it will update the text color version using
 	// the default values by using the new raw text.
 	//
 	// Defaults to "[WARN]" and pio.Purple("[WARN]").
-	WarnText = func(newRawText string, newColorfulText string) (oldRawText string) {
-		oldRawText = warnText
-		if newRawText != "" {
-			warnText = newRawText
-			warnTextWithColor = pio.Purple(newRawText)
-		}
-		if newColorfulText != "" {
-			warnTextWithColor = newColorfulText
-		}
-		return
-	}
-
-	infoText = "[INFO]"
-	// infoTextWithColor is the color that will be printed
-	// when Info/Infof functions are being used, if `Printer#IsTerminal` is true.
 	//
-	// Defaults to a mix of light green and blue color.
-	infoTextWithColor = pio.LightGreen(infoText)
+	// Deprecated Use `Levels[WarnLevel].SetText(string, string)` instead.
+	WarnText = Levels[WarnLevel].SetText
+
 	// InfoText can modify the prefix that will be prepended
 	// to the output message log when `Info/Infof` functions are being used.
 	//
-	// If "newRawText" is empty then it will just return the current prefix string value.
 	// If "newColorfulText" is empty then it will update the text color version using
 	// the default values by using the new raw text.
 	//
 	// Defaults to "[INFO]" and pio.LightGreen("[INFO]").
-	InfoText = func(newRawText string, newColorfulText string) (oldRawText string) {
-		oldRawText = infoText
-		if newRawText != "" {
-			infoText = newRawText
-			infoTextWithColor = pio.LightGreen(newRawText)
-		}
-		if newColorfulText != "" {
-			infoTextWithColor = newColorfulText
-		}
-		return
-	}
-
-	debugText = "[DBUG]"
-	// debugTextWithColor is the color that will be printed
-	// when Debug/Debugf functions are beingused, if `Printer#IsTerminal` is true.
 	//
-	// Defaults to a yellow color.
-	debugTextWithColor = pio.Yellow(debugText)
+	// Deprecated Use `Levels[InfoLevel].SetText(string, string)` instead.
+	InfoText = Levels[InfoLevel].SetText
+
 	// DebugText can modify the prefix that will be prepended
 	// to the output message log when `Info/Infof` functions are being used.
 	//
-	// If "newRawText" is empty then it will just return the current prefix string value.
 	// If "newColorfulText" is empty then it will update the text color version using
 	// the default values by using the new raw text.
 	//
 	// Defaults to "[DBUG]" and pio.Yellow("[DBUG]").
-	DebugText = func(newRawText string, newColorfulText string) (oldRawText string) {
-		oldRawText = debugText
-		if newRawText != "" {
-			debugText = newRawText
-			debugTextWithColor = pio.Yellow(newRawText)
-		}
-		if newColorfulText != "" {
-			debugTextWithColor = newColorfulText
-		}
-		return
-	}
+	//
+	// Deprecated Use `Levels[DebugLevel].SetText(string, string)` instead.
+	DebugText = Levels[DebugLevel].SetText
 
 	// GetTextForLevel is the function which
 	// has the "final" responsibility to generate the text (colorful or not)
@@ -169,33 +168,9 @@ var (
 	//
 	// It can be used to override the default behavior, at the start-up state.
 	GetTextForLevel = func(level Level, enableColor bool) string {
-		switch level {
-		case ErrorLevel:
-			if !enableColor {
-				return errorText
-			}
-			return errorTextWithColor
-
-		case WarnLevel:
-			if !enableColor {
-				return warnText
-			}
-			return warnTextWithColor
-
-		case InfoLevel:
-			if !enableColor {
-				return infoText
-			}
-			return infoTextWithColor
-
-		case DebugLevel:
-			if !enableColor {
-				return debugText
-			}
-			return debugTextWithColor
-
-		default:
-			return ""
+		if meta, ok := Levels[level]; ok {
+			return meta.Text(enableColor)
 		}
+		return ""
 	}
 )

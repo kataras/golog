@@ -36,7 +36,7 @@ Source code and other details for the project are available at GitHub:
 
 Current Version
 
-0.0.6
+0.0.7
 
 Installation
 
@@ -148,7 +148,7 @@ Levels
 Golog is a leveled logger, therefore you can set a level and print
 whenever the print level is valid with the set-ed one.
 
-Available levels are:
+Available built'n levels are:
 
 	// DisableLevel will disable printer
 	DisableLevel Level = iota
@@ -161,9 +161,13 @@ Available levels are:
 	// DebugLevel will print on any level, errors, warnings, infos and debug messages
 	DebugLevel
 
+
+Below you'll learn a way to add a custom level or modify an existing level.
+
 The default colorful text(or raw text for unsupported outputs) for levels
 can be overridden by using the `golog#ErrorText, golog#WarnText, golog#InfoText and golog#DebugText`
 functions.
+
 
 Example Code:
 
@@ -201,6 +205,50 @@ Example Code:
 		golog.Debug("This is a debug message")
 	}
 
+
+Golog gives you the power to add or modify existing levels is via Level Metadata.
+
+
+Example Code:
+
+	package main
+
+	import (
+		"github.com/kataras/golog"
+	)
+
+	func main() {
+		// Let's add a custom level,
+		//
+		// It should be starting from level with uint 5, 0 is the first.
+		// because we have 5 built'n levels:
+		// disabled,
+		// error,
+		// warn,
+		// info
+		// debug
+
+		// First we create our level to a golog.Level
+		// in order to be used in the Log functions.
+		var SuccessLevel golog.Level = 5
+		// Register our level, just three fields.
+		golog.Levels[SuccessLevel] = &golog.LevelMetadata{
+			Name:    "success",
+			RawText: "[SUCC]",
+			// ColorfulText (Green Color[SUCC])
+			ColorfulText: "\x1b[32m[SUCC]\x1b[0m",
+		}
+
+		// create a new golog logger
+		myLogger := golog.New()
+
+		// set its level to the higher in order to see it
+		// ("success" is the name we gave to our level)
+		myLogger.SetLevel("success")
+
+		// and finally print a log message with our custom level
+		myLogger.Logf(SuccessLevel, "This is a success log message with green color")
+	}
 
 
 The logger's level can be changed via passing one of the
@@ -344,4 +392,4 @@ Examples:
 package golog // import "github.com/kataras/golog"
 
 // Version is the version string representation of the "golog" package.
-const Version = "0.0.6"
+const Version = "0.0.7"
