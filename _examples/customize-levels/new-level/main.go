@@ -7,9 +7,10 @@ import (
 func main() {
 	// Let's add a custom level,
 	//
-	// It should be starting from level with uint 5, 0 is the first.
-	// because we have 5 built'n levels:
+	// It should be starting from level index 6,
+	// because we have 6 built'n levels  (0 is the start index):
 	// disable,
+	// fatal,
 	// error,
 	// warn,
 	// info
@@ -17,7 +18,7 @@ func main() {
 
 	// First we create our level to a golog.Level
 	// in order to be used in the Log functions.
-	var SuccessLevel golog.Level = 5
+	var SuccessLevel golog.Level = 6
 	// Register our level, just three fields.
 	golog.Levels[SuccessLevel] = &golog.LevelMetadata{
 		Name:    "success",

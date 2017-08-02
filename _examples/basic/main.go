@@ -22,4 +22,5 @@ func main() {
 	golog.Warn("This is a warning message")
 	golog.Error("This is an error message")
 	golog.Debug("This is a debug message")
+	golog.Fatal("Fatal will exit no matter what, but it will also print the log message if logger's Level is \"fatal\"")
 }

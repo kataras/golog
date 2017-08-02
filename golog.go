@@ -58,6 +58,7 @@ func SetTimeFormat(s string) {
 //
 // Available level names are:
 // "disable"
+// "fatal"
 // "error"
 // "warn"
 // "info"
@@ -84,6 +85,18 @@ func Println(v ...interface{}) {
 // It adds a new line in the end.
 func Logf(level Level, format string, args ...interface{}) {
 	Default.Logf(level, format, args...)
+}
+
+// Fatal `os.Exit(1)` exit no matter the level of the logger, if the logger's  level is FatalLevel
+// then it will print the log message too.
+func Fatal(v ...interface{}) {
+	Default.Fatal(v...)
+}
+
+// Fatalf will `os.Exit(1)` no matter the level of the logger, if the logger's level is FatalLevel
+// then it will print the log message too.
+func Fatalf(format string, args ...interface{}) {
+	Default.Fatalf(format, args...)
 }
 
 // Error will print only when logger's Level is error.

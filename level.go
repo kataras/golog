@@ -13,6 +13,9 @@ type Level uint32
 const (
 	// DisableLevel will disable the printer
 	DisableLevel Level = iota
+	// FatalLevel will `os.Exit(1)` no matter the level of the logger, if the logger's level is FatalLevel
+	// then it will print the log message too.
+	FatalLevel
 	// ErrorLevel will print only errors
 	ErrorLevel
 	// WarnLevel will print errors and warnings
@@ -29,9 +32,16 @@ const (
 // without any loses.
 var Levels = map[Level]*LevelMetadata{
 	DisableLevel: {
-		Name:         "disable",
-		RawText:      "",
-		ColorfulText: "",
+		Name:             "disable",
+		AlternativeNames: []string{"disabled"},
+		RawText:          "",
+		ColorfulText:     "",
+	},
+	FatalLevel: {
+		Name:    "fatal",
+		RawText: "[FTAL]",
+		// white foreground but red background, it's nice
+		ColorfulText: pio.RedBackground("[FTAL]"),
 	},
 	ErrorLevel: {
 		Name:         "error",
@@ -39,9 +49,10 @@ var Levels = map[Level]*LevelMetadata{
 		ColorfulText: pio.Red("[ERRO]"),
 	},
 	WarnLevel: {
-		Name:         "warn",
-		RawText:      "[WARN]",
-		ColorfulText: pio.Purple("[WARN]"),
+		Name:             "warn",
+		AlternativeNames: []string{"warning"},
+		RawText:          "[WARN]",
+		ColorfulText:     pio.Purple("[WARN]"),
 	},
 	InfoLevel: {
 		Name:         "info",
@@ -60,6 +71,14 @@ func fromLevelName(levelName string) Level {
 		if meta.Name == levelName {
 			return level
 		}
+
+		if len(meta.AlternativeNames) > 0 {
+			for _, altName := range meta.AlternativeNames {
+				if altName == levelName {
+					return level
+				}
+			}
+		}
 	}
 	return DisableLevel
 }
@@ -72,6 +91,11 @@ type LevelMetadata struct {
 	// to convert a string level on `SetLevel`
 	// to the correct Level type.
 	Name string
+	// AlternativeNames are the names that can be referred to this specific log level.
+	// i.e Name = "warn"
+	// AlternativeNames = []string{"warning"}, it's an optional field,
+	// therefore we keep Name as a simple string and created this new field.
+	AlternativeNames []string
 	// Tha RawText will be the prefix of the log level
 	// when output doesn't supports colors.
 	//

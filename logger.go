@@ -142,6 +142,7 @@ func (l *Logger) SetTimeFormat(s string) {
 //
 // Available level names are:
 // "disable"
+// "fatal"
 // "error"
 // "warn"
 // "info"
@@ -172,6 +173,10 @@ func (l *Logger) print(level Level, msg string, newLine bool) {
 
 		l.releaseLog(log)
 	}
+	// if level was fatal we don't care about the logger's level, we'll exit.
+	if l.Level == FatalLevel {
+		os.Exit(1)
+	}
 }
 
 // Print prints a log message without levels and colors.
@@ -198,6 +203,19 @@ func (l *Logger) Log(level Level, v ...interface{}) {
 func (l *Logger) Logf(level Level, format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	l.Log(level, msg)
+}
+
+// Fatal `os.Exit(1)` exit no matter the level of the logger, if the logger's  level is FatalLevel
+// then it will print the log message too.
+func (l *Logger) Fatal(v ...interface{}) {
+	l.Log(FatalLevel, v...)
+}
+
+// Fatalf will `os.Exit(1)` no matter the level of the logger, if the logger's level is FatalLevel
+// then it will print the log message too.
+func (l *Logger) Fatalf(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	l.Fatal(msg)
 }
 
 // Error will print only when logger's Level is error.

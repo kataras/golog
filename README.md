@@ -13,12 +13,12 @@ _golog_ is a simple, fast and easy-to-use level-based logger written entirely in
 ### 🥇 Features
 
 * Focus on high performance and agile perspective of things
-* Easy API and a default package-level instance, i.e `golog#Errorf/Warnf/Infof/Debugf`
+* Easy API and a default package-level instance, i.e `golog#Fatalf/Errorf/Warnf/Infof/Debugf`
 * Fully compatible with the standard library
 * Thanks to the [pio library](https://github.com/kataras/pio) it supports any type of structure, gives you the ability to `Hijack` and `Handle` or `Intercept` the on-going logs too 
 * Set or even Add unlimited number of output targets, `io.Writer`
 * Scan from any `io.Reader` and log to the defined output target(s)
-* Levels such as `error`, `warn`, `info`, `debug`, or `disable`
+* Levels such as `fatal`,`error`, `warn`, `info`, `debug`, or `disable`
 * Beautiful (**customizable**) colors for leveled logs, automatically omit colors when output does not support colors (i.e files)
 * Incredible high-performant, 3 times faster than your favourite logger
 * Never-Panics
@@ -60,17 +60,15 @@ func main() {
     golog.Warn("This is a warning message")
     golog.Error("This is an error message")
     golog.Debug("This is a debug message")
+    golog.Fatal("Fatal will exit no matter what, but it will also print the log message if logger's Level is \"fatal\"")
 }
 ```
 
 ```bash 
 $ go run main.go
-> This is a raw message, no levels, no colors.
-> [INFO] This is an info message, with colors (if the output is terminal)
-> [WARN] This is a warning message
-> [ERRO] This is an error message
-> [DBUG] This is a debug message
 ```
+![Output from win terminal](screen.png)
+
 
 ### 🔥 Benchmarks
 
