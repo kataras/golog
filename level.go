@@ -11,7 +11,7 @@ type Level uint32
 
 // The available built'n log levels, users can add or modify a level via `Levels` field.
 const (
-	// DisableLevel will disable printer
+	// DisableLevel will disable the printer
 	DisableLevel Level = iota
 	// ErrorLevel will print only errors
 	ErrorLevel
@@ -29,7 +29,7 @@ const (
 // without any loses.
 var Levels = map[Level]*LevelMetadata{
 	DisableLevel: {
-		Name:         "disabled",
+		Name:         "disable",
 		RawText:      "",
 		ColorfulText: "",
 	},

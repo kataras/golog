@@ -42,7 +42,7 @@ func getExternalPrintFunc(logger ExternalLogger, log *Log) func(...interface{}) 
 		return logger.Debug
 	}
 
-	// disabled level or use of golog#Print/Println functions:
+	// disable level or use of golog#Print/Println functions:
 
 	// passed with Println
 	if log.NewLine {

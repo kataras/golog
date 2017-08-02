@@ -222,7 +222,7 @@ Example Code:
 		//
 		// It should be starting from level with uint 5, 0 is the first.
 		// because we have 5 built'n levels:
-		// disabled,
+		// disable,
 		// error,
 		// warn,
 		// info
