@@ -11,18 +11,19 @@ type Level uint32
 
 // The available built'n log levels, users can add or modify a level via `Levels` field.
 const (
-	// DisableLevel will disable the printer
+	// DisableLevel will disable the printer.
 	DisableLevel Level = iota
-	// FatalLevel will `os.Exit(1)` no matter the level of the logger, if the logger's level is FatalLevel
+	// FatalLevel will `os.Exit(1)` no matter the level of the logger.
+	// If the logger's level is fatal, error, warn, info or debug
 	// then it will print the log message too.
 	FatalLevel
-	// ErrorLevel will print only errors
+	// ErrorLevel will print only errors.
 	ErrorLevel
-	// WarnLevel will print errors and warnings
+	// WarnLevel will print errors and warnings.
 	WarnLevel
-	// InfoLevel will print errors, warnings and infos
+	// InfoLevel will print errors, warnings and infos.
 	InfoLevel
-	// DebugLevel will print on any level, errors, warnings, infos and debug messages
+	// DebugLevel will print on any level, fatals, errors, warnings, infos and debug logs.
 	DebugLevel
 )
 
@@ -72,11 +73,9 @@ func fromLevelName(levelName string) Level {
 			return level
 		}
 
-		if len(meta.AlternativeNames) > 0 {
-			for _, altName := range meta.AlternativeNames {
-				if altName == levelName {
-					return level
-				}
+		for _, altName := range meta.AlternativeNames {
+			if altName == levelName {
+				return level
 			}
 		}
 	}

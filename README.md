@@ -2,7 +2,7 @@
 
 _golog_ is a simple, fast and easy-to-use level-based logger written entirely in [GoLang](https://golang.org).
 
-[![benchmarks_30_jul_2017](_benchmarks/cmd.png)](_benchmarks)
+![Output from win terminal](screen.png)
 
 [![build status](https://img.shields.io/travis/kataras/golog/master.svg?style=flat-square)](https://travis-ci.org/kataras/golog)
 [![report card](https://img.shields.io/badge/report%20card-a%2B-ff3333.svg?style=flat-square)](http://goreportcard.com/report/kataras/golog)
@@ -60,15 +60,9 @@ func main() {
     golog.Warn("This is a warning message")
     golog.Error("This is an error message")
     golog.Debug("This is a debug message")
-    golog.Fatal("Fatal will exit no matter what, but it will also print the log message if logger's Level is \"fatal\"")
+    golog.Fatal("Fatal will exit no matter what, but it will also print the log message if logger's Level is >=FatalLevel")
 }
 ```
-
-```bash 
-$ go run main.go
-```
-![Output from win terminal](screen.png)
-
 
 ### 🔥 Benchmarks
 
@@ -91,6 +85,7 @@ If you find that something is not working as expected please open an [issue](htt
 
 > Do not hesitate to put your package on this list via [PR](https://github.com/kataras/golog/pulls)!
 
+<!--
 ### ⚽ TODO
 
-- [x] Implement a way to be able to add custom levels with the full power of the built'n levels[*](HISTORY.md#su-30-july-2017-v006-v007)
+- [x] Implement a way to be able to add custom levels with the full power of the built'n levels[*](HISTORY.md#su-30-july-2017-v006-v007) -->

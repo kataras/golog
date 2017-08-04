@@ -205,58 +205,60 @@ func (l *Logger) Logf(level Level, format string, args ...interface{}) {
 	l.Log(level, msg)
 }
 
-// Fatal `os.Exit(1)` exit no matter the level of the logger, if the logger's  level is FatalLevel
+// Fatal `os.Exit(1)` exit no matter the level of the logger.
+// If the logger's level is fatal, error, warn, info or debug
 // then it will print the log message too.
 func (l *Logger) Fatal(v ...interface{}) {
 	l.Log(FatalLevel, v...)
 }
 
-// Fatalf will `os.Exit(1)` no matter the level of the logger, if the logger's level is FatalLevel
+// Fatalf will `os.Exit(1)` no matter the level of the logger.
+// If the logger's level is fatal, error, warn, info or debug
 // then it will print the log message too.
 func (l *Logger) Fatalf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	l.Fatal(msg)
 }
 
-// Error will print only when logger's Level is error.
+// Error will print only when logger's Level is error, warn, info or debug.
 func (l *Logger) Error(v ...interface{}) {
 	l.Log(ErrorLevel, v...)
 }
 
-// Errorf will print only when logger's Level is error.
+// Errorf will print only when logger's Level is error, warn, info or debug.
 func (l *Logger) Errorf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	l.Error(msg)
 }
 
-// Warn will print when logger's Level is error, or warning.
+// Warn will print when logger's Level is warn, info or debug.
 func (l *Logger) Warn(v ...interface{}) {
 	l.Log(WarnLevel, v...)
 }
 
-// Warnf will print when logger's Level is error, or warning.
+// Warnf will print when logger's Level is warn, info or debug.
 func (l *Logger) Warnf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	l.Warn(msg)
 }
 
-// Info will print when logger's Level is error, warning or info.
+// Info will print when logger's Level is info or debug.
 func (l *Logger) Info(v ...interface{}) {
 	l.Log(InfoLevel, v...)
 }
 
-// Infof will print when logger's Level is error, warning or info.
+// Infof will print when logger's Level is info or debug.
 func (l *Logger) Infof(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	l.Info(msg)
 }
 
-// Debug will print when logger's Level is error, warning,info or debug.
+// Debug will print when logger's Level is debug.
 func (l *Logger) Debug(v ...interface{}) {
 	l.Log(DebugLevel, v...)
 }
 
-// Debugf will print when logger's Level is error, warning,info or debug.
+// Debugf will print when logger's Level is debug.
 func (l *Logger) Debugf(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	l.Debug(msg)
