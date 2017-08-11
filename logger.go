@@ -174,7 +174,7 @@ func (l *Logger) print(level Level, msg string, newLine bool) {
 		l.releaseLog(log)
 	}
 	// if level was fatal we don't care about the logger's level, we'll exit.
-	if l.Level == FatalLevel {
+	if level == FatalLevel {
 		os.Exit(1)
 	}
 }
