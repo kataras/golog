@@ -46,15 +46,15 @@ func main() {
     // Default Output is `os.Stdout`,
     // but you can change it:
     // golog.SetOutput(os.Stderr)
-    
+
     // Time Format defaults to: "2006/01/02 15:04"
     // you can change it to something else or disable it with:
     golog.SetTimeFormat("")
-    
+
     // Level defaults to "info",
     // but you can change it:
     golog.SetLevel("debug")
-    
+
     golog.Println("This is a raw message, no levels, no colors.")
     golog.Info("This is an info message, with colors (if the output is terminal)")
     golog.Warn("This is a warning message")
@@ -63,6 +63,19 @@ func main() {
     golog.Fatal("Fatal will exit no matter what, but it will also print the log message if logger's Level is >=FatalLevel")
 }
 ```
+
+#### Examples
+
+* [basic](_examples/basic/main.go)
+* [child](_examples/child/main.go)
+* [add new level](_examples/customize-levels/new-level/main.go)
+* [change text and color](_examples/customize-levels/text-and-colors/main.go)
+* [customize output](_examples/customize-output/main.go)
+* [multi output](_examples/multi-output/main.go)
+* [scan](_examples/scan/main.go)
+* [logurs integration](_examples/integrations/logrus/main.go)
+* [log.Logger std integration](_examples/integrations/std/main.go)
+* [new instance](_examples/instance/main.go)
 
 ### 🔥 Benchmarks
 
