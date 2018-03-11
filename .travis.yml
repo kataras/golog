@@ -3,8 +3,8 @@ os:
   - linux
 #  - osx
 go:
-  - go1.8
-# - tip
+  - "go1.9"
+  - "go1.10"
 go_import_path: github.com/kataras/golog
 install:
   - go get ./...

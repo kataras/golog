@@ -9,7 +9,7 @@ import (
 // NewLine can override the default package-level line breaker, "\n".
 // It should be called (in-sync) before  the print or leveled functions.
 //
-// See `github.com/kataras/pio#NewLine` too.
+// See `github.com/kataras/pio#NewLine` and `Logger#NewLine` too.
 func NewLine(newLineChar string) {
 	pio.NewLine = []byte(newLineChar)
 }

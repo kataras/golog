@@ -29,12 +29,21 @@ type Logger struct {
 	Prefix     []byte
 	Level      Level
 	TimeFormat string
-	mu         sync.Mutex
-	Printer    *pio.Printer
-	handlers   []Handler
-	once       sync.Once
-	logs       sync.Pool
-	children   *loggerMap
+	// if new line should be added on all log functions, even the `F`s.
+	// It defaults to true.
+	//
+	// See `golog#NewLine(newLineChar string)` as well.
+	//
+	// Note that this will not override the time and level prefix,
+	// if you want to customize the log message please read the examples
+	// or navigate to: https://github.com/kataras/golog/issues/3#issuecomment-355895870.
+	NewLine  bool
+	mu       sync.Mutex
+	Printer  *pio.Printer
+	handlers []Handler
+	once     sync.Once
+	logs     sync.Pool
+	children *loggerMap
 }
 
 // New returns a new golog with a default output to `os.Stdout`
@@ -43,6 +52,7 @@ func New() *Logger {
 	return &Logger{
 		Level:      InfoLevel,
 		TimeFormat: "2006/01/02 15:04",
+		NewLine:    true,
 		Printer:    pio.NewPrinter("", os.Stdout).EnableDirectOutput().Hijack(logHijacker),
 		children:   newLoggerMap(),
 	}
@@ -103,16 +113,22 @@ var logHijacker = func(ctx *pio.Ctx) {
 var NopOutput = pio.NopOutput()
 
 // SetOutput overrides the Logger's Printer's Output with another `io.Writer`.
-func (l *Logger) SetOutput(w io.Writer) {
+//
+// Returns itself.
+func (l *Logger) SetOutput(w io.Writer) *Logger {
 	l.Printer.SetOutput(w)
+	return l
 }
 
 // AddOutput adds one or more `io.Writer` to the Logger's Printer.
 //
 // If one of the "writers" is not a terminal-based (i.e File)
 // then colors will be disabled for all outputs.
-func (l *Logger) AddOutput(writers ...io.Writer) {
+//
+// Returns itself.
+func (l *Logger) AddOutput(writers ...io.Writer) *Logger {
 	l.Printer.AddOutput(writers...)
+	return l
 }
 
 // SetPrefix sets a prefix for this "l" Logger.
@@ -131,10 +147,26 @@ func (l *Logger) SetPrefix(s string) *Logger {
 
 // SetTimeFormat sets time format for logs,
 // if "s" is empty then time representation will be off.
-func (l *Logger) SetTimeFormat(s string) {
+//
+// Returns itself.
+func (l *Logger) SetTimeFormat(s string) *Logger {
 	l.mu.Lock()
 	l.TimeFormat = s
 	l.mu.Unlock()
+
+	return l
+}
+
+// DisableNewLine disables the new line suffix on every log function, even the `F`'s,
+// the caller should add "\n" to the log message manually after this call.
+//
+// Returns itself.
+func (l *Logger) DisableNewLine() *Logger {
+	l.mu.Lock()
+	l.NewLine = false
+	l.mu.Unlock()
+
+	return l
 }
 
 // SetLevel accepts a string representation of
@@ -149,10 +181,14 @@ func (l *Logger) SetTimeFormat(s string) {
 // "debug"
 //
 // Alternatively you can use the exported `Level` field, i.e `Level = golog.ErrorLevel`
-func (l *Logger) SetLevel(levelName string) {
+//
+// Returns itself.
+func (l *Logger) SetLevel(levelName string) *Logger {
 	l.mu.Lock()
 	l.Level = fromLevelName(levelName)
 	l.mu.Unlock()
+
+	return l
 }
 
 func (l *Logger) print(level Level, msg string, newLine bool) {
@@ -181,11 +217,16 @@ func (l *Logger) print(level Level, msg string, newLine bool) {
 
 // Print prints a log message without levels and colors.
 func (l *Logger) Print(v ...interface{}) {
-	l.print(DisableLevel, fmt.Sprint(v...), false)
+	l.print(DisableLevel, fmt.Sprint(v...), l.NewLine)
+}
+
+// Printf formats according to a format specifier and writes to `Printer#Output` without levels and colors.
+func (l *Logger) Printf(format string, args ...interface{}) {
+	l.print(DisableLevel, fmt.Sprintf(format, args...), l.NewLine)
 }
 
 // Println prints a log message without levels and colors.
-// It adds a new line at the end.
+// It adds a new line at the end, it overrides the `NewLine` option.
 func (l *Logger) Println(v ...interface{}) {
 	l.print(DisableLevel, fmt.Sprint(v...), true)
 }
@@ -194,7 +235,7 @@ func (l *Logger) Println(v ...interface{}) {
 // This method can be used to use custom log levels if needed.
 // It adds a new line in the end.
 func (l *Logger) Log(level Level, v ...interface{}) {
-	l.print(level, fmt.Sprint(v...), true)
+	l.print(level, fmt.Sprint(v...), l.NewLine)
 }
 
 // Logf prints a leveled log message to the output.
