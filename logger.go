@@ -301,8 +301,13 @@ func (l *Logger) Debug(v ...interface{}) {
 
 // Debugf will print when logger's Level is debug.
 func (l *Logger) Debugf(format string, args ...interface{}) {
-	msg := fmt.Sprintf(format, args...)
-	l.Debug(msg)
+	// On debug mode don't even try to fmt.Sprintf if it's not required,
+	// this can be used to allow `Debugf` to be called without even the `fmt.Sprintf`'s
+	// performance cost if the logger doesn't allow debug logging.
+	if l.Level >= DebugLevel {
+		msg := fmt.Sprintf(format, args...)
+		l.Debug(msg)
+	}
 }
 
 // Install receives  an external logger
