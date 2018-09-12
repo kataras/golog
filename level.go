@@ -198,12 +198,12 @@ var (
 	}
 	
 	// GetNameForLevel is the function which
-        // has the "final" responsibility to generagte the name of the level
-        // that is prepended to the leveled log message
-        GetNameForLevel = func(level Level) string {
-                if meta, ok := Levels[level]; ok {
-                        return meta.Name
-                }
-                return ""
-        }
+	// has the "final" responsibility to generagte the name of the level
+	// that is prepended to the leveled log message
+	GetNameForLevel = func(level Level) string {
+		if meta, ok := Levels[level]; ok {
+			return meta.Name
+		}
+		return ""
+	}
 )
