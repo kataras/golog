@@ -3,6 +3,7 @@
 _golog_ is a simple, fast and easy-to-use level-based logger written entirely in [GoLang](https://golang.org).
 
 ![Output from win terminal](screen.png)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fkataras%2Fgolog.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fkataras%2Fgolog?ref=badge_shield)
 
 [![build status](https://img.shields.io/travis/kataras/golog/master.svg?style=flat-square)](https://travis-ci.org/kataras/golog)
 [![report card](https://img.shields.io/badge/report%20card-a%2B-ff3333.svg?style=flat-square)](http://goreportcard.com/report/kataras/golog)
@@ -102,3 +103,6 @@ If you find that something is not working as expected please open an [issue](htt
 ### ⚽ TODO
 
 - [x] Implement a way to be able to add custom levels with the full power of the built'n levels[*](HISTORY.md#su-30-july-2017-v006-v007) -->
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fkataras%2Fgolog.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fkataras%2Fgolog?ref=badge_large)
