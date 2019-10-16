@@ -29,8 +29,31 @@ Navigate through [_examples](_examples/) and [integrations](_examples/integratio
 
 The only requirement is the Go Programming Language[*](https://golang.org).
 
+<details>
+<summary>Go modules</summary>
+
 ```bash
-$ go get github.com/kataras/golog
+$ go get github.com/kataras/golog@v0.0.9
+```
+
+Or edit your project's go.mod file and execute $ go build.
+
+```bash
+module your_project_name
+
+go 1.13
+
+require (
+    github.com/kataras/golog v0.0.9
+)
+```
+
+> `$ go build`
+
+</details>
+
+```bash
+$ go get -u github.com/kataras/golog
 ```
 
 > golog is fairly built on top of the [pio library](https://github.com/kataras/pio), it has no more external dependencies.

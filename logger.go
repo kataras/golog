@@ -418,6 +418,7 @@ func (l *Logger) Clone() *Logger {
 		Prefix:     l.Prefix,
 		Level:      l.Level,
 		TimeFormat: l.TimeFormat,
+		NewLine:    l.NewLine,
 		Printer:    l.Printer,
 		handlers:   l.handlers,
 		children:   newLoggerMap(),

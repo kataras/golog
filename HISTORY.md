@@ -1,3 +1,8 @@
+## We 16 Octomber 2019 | v0.0.9
+
+- Set the Logger's `NewLine` on `Clone` method which `golog` makes use inside its `Child("...")` method.
+- Go module (v0.0.9). 
+
 ## We 02 August 2017 | v0.0.8
 
 Add `fatal` level and `Fatal/Fatalf` funcs.

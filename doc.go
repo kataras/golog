@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Gerasimos Maropoulos.
+// Copyright (c) 2017-2019 Gerasimos Maropoulos.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ Source code and other details for the project are available at GitHub:
 
 Current Version
 
-0.0.8
+0.0.9
 
 Installation
 
@@ -394,4 +394,4 @@ Examples:
 package golog // import "github.com/kataras/golog"
 
 // Version is the version string representation of the "golog" package.
-const Version = "0.0.8"
+const Version = "0.0.9"
