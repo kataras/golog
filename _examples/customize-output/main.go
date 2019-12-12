@@ -63,7 +63,7 @@ func jsonOutput1(l *golog.Log) bool {
 		l.FormatTime(),
 		golog.GetTextForLevel(l.Level, false),
 		l.Message,
-		fmt.Sprintf("%s#%d", source, line),
+		fmt.Sprintf("%s:%d", source, line),
 	}, "", "    ")
 
 	fmt.Print(string(b))
@@ -77,7 +77,7 @@ func jsonOutput2(l *golog.Log) bool {
 		datetime = l.FormatTime()
 		level    = golog.GetTextForLevel(l.Level, false)
 		message  = l.Message
-		source   = fmt.Sprintf("%s#%d", fn, line)
+		source   = fmt.Sprintf("%s:%d", fn, line)
 	)
 	jsonStr := fmt.Sprintf("{\n\t\"datetime\":\"%s\",\n\t\"level\":\"%s\",\n\t\"message\":\"%s\",\n\t\"source\":\"%s\"\n}", datetime, level, message, source)
 	fmt.Println(jsonStr)
