@@ -42,28 +42,28 @@ var Levels = map[Level]*LevelMetadata{
 		Name:    "fatal",
 		RawText: "[FTAL]",
 		// white foreground but red background, it's nice
-		ColorfulText: pio.RedBackground("[FTAL]"),
+		ColorfulText: pio.Rich("[FTAL]", pio.Red, pio.Background),
 	},
 	ErrorLevel: {
 		Name:         "error",
 		RawText:      "[ERRO]",
-		ColorfulText: pio.Red("[ERRO]"),
+		ColorfulText: pio.Rich("[ERRO]", pio.Red),
 	},
 	WarnLevel: {
 		Name:             "warn",
 		AlternativeNames: []string{"warning"},
 		RawText:          "[WARN]",
-		ColorfulText:     pio.Purple("[WARN]"),
+		ColorfulText:     pio.Rich("[WARN]", pio.Magenta),
 	},
 	InfoLevel: {
 		Name:         "info",
 		RawText:      "[INFO]",
-		ColorfulText: pio.LightGreen("[INFO]"),
+		ColorfulText: pio.Rich("[INFO]", pio.Cyan),
 	},
 	DebugLevel: {
 		Name:         "debug",
 		RawText:      "[DBUG]",
-		ColorfulText: pio.Yellow("[DBUG]"),
+		ColorfulText: pio.Rich("[DBUG]", pio.Yellow),
 	},
 }
 

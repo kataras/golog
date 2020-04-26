@@ -1,5 +1,5 @@
 module github.com/kataras/golog
 
-go 1.13
+go 1.14
 
-require github.com/kataras/pio v0.0.2
+require github.com/kataras/pio v0.0.3

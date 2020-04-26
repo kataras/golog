@@ -33,7 +33,7 @@ The only requirement is the Go Programming Language[*](https://golang.org).
 <summary>Go modules</summary>
 
 ```bash
-$ go get github.com/kataras/golog@v0.0.10
+$ go get github.com/kataras/golog@latest
 ```
 
 Or edit your project's go.mod file and execute $ go build.
@@ -41,10 +41,10 @@ Or edit your project's go.mod file and execute $ go build.
 ```bash
 module your_project_name
 
-go 1.13
+go 1.14
 
 require (
-    github.com/kataras/golog v0.0.10
+    github.com/kataras/golog v0.0.11
 )
 ```
 

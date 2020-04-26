@@ -1,3 +1,7 @@
+## Sa 25 April 2020 | v0.0.11
+
+- Update the [pio dependency](https://github.com/kataras/pio) to v0.0.3.
+
 ## Th 12 December 2019 | v0.0.10
 
 - Update [pio dependency](https://github.com/kataras/pio) to version 0.0.2 as it contains a small but important bugfix for GUI apps.
