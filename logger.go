@@ -78,6 +78,8 @@ func (l *Logger) releaseLog(log *Log) {
 	l.logs.Put(log)
 }
 
+var spaceBytes = []byte(" ")
+
 // we could use marshal inside Log but we don't have access to printer,
 // we could also use the .Handle with NopOutput too but
 // this way is faster:
@@ -88,25 +90,31 @@ var logHijacker = func(ctx *pio.Ctx) {
 		return
 	}
 
-	line := GetTextForLevel(l.Level, ctx.Printer.IsTerminal)
-	if line != "" {
-		line += " "
+	w := ctx.Printer
+
+	if prefix := l.Logger.Prefix; len(prefix) > 0 {
+		fmt.Fprint(w, prefix)
+	}
+
+	if l.Level != DisableLevel {
+		if level, ok := Levels[l.Level]; ok {
+			pio.WriteRich(w, level.Title, level.ColorCode, level.Style...)
+			w.Write(spaceBytes)
+		}
 	}
 
 	if t := l.FormatTime(); t != "" {
-		line += t + " "
-	}
-	line += l.Message
-
-	var b []byte
-	if pref := l.Logger.Prefix; len(pref) > 0 {
-		b = append(pref, []byte(line)...)
-	} else {
-		b = []byte(line)
+		fmt.Fprint(w, t)
+		w.Write(spaceBytes)
 	}
 
-	ctx.Store(b, nil)
-	ctx.Next()
+	fmt.Fprint(w, l.Message)
+
+	if l.Logger.NewLine {
+		fmt.Fprintln(w)
+	}
+
+	ctx.Store(nil, pio.ErrHandled)
 }
 
 // NopOutput disables the output.

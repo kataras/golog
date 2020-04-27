@@ -1,6 +1,8 @@
-## Sa 25 April 2020 | v0.0.11
+## Tu 28 April 2020 | v0.0.12
 
-- Update the [pio dependency](https://github.com/kataras/pio) to v0.0.3.
+This release provides support for colorized log level per registered output. Log's level will be colorful for registered `io.Writer`(via `AddOutput`) that supports colors, even when the rest of the writers (e.g. files) don't.
+
+**Breaking changes on the `Levels` map**. See the corresponding updated example for migration.
 
 ## Th 12 December 2019 | v0.0.10
 

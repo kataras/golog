@@ -1,10 +1,6 @@
 package golog
 
-import (
-	"strings"
-
-	"github.com/kataras/pio"
-)
+import "github.com/kataras/pio"
 
 // Level is a number which defines the log level.
 type Level uint32
@@ -35,35 +31,34 @@ var Levels = map[Level]*LevelMetadata{
 	DisableLevel: {
 		Name:             "disable",
 		AlternativeNames: []string{"disabled"},
-		RawText:          "",
-		ColorfulText:     "",
+		Title:            "",
 	},
 	FatalLevel: {
-		Name:    "fatal",
-		RawText: "[FTAL]",
-		// white foreground but red background, it's nice
-		ColorfulText: pio.Rich("[FTAL]", pio.Red, pio.Background),
+		Name:      "fatal",
+		Title:     "[FTAL]",
+		ColorCode: pio.Red,
+		Style:     []pio.RichOption{pio.Background},
 	},
 	ErrorLevel: {
-		Name:         "error",
-		RawText:      "[ERRO]",
-		ColorfulText: pio.Rich("[ERRO]", pio.Red),
+		Name:      "error",
+		Title:     "[ERRO]",
+		ColorCode: pio.Red,
 	},
 	WarnLevel: {
 		Name:             "warn",
 		AlternativeNames: []string{"warning"},
-		RawText:          "[WARN]",
-		ColorfulText:     pio.Rich("[WARN]", pio.Magenta),
+		Title:            "[WARN]",
+		ColorCode:        pio.Magenta,
 	},
 	InfoLevel: {
-		Name:         "info",
-		RawText:      "[INFO]",
-		ColorfulText: pio.Rich("[INFO]", pio.Cyan),
+		Name:      "info",
+		Title:     "[INFO]",
+		ColorCode: pio.Cyan,
 	},
 	DebugLevel: {
-		Name:         "debug",
-		RawText:      "[DBUG]",
-		ColorfulText: pio.Rich("[DBUG]", pio.Yellow),
+		Name:      "debug",
+		Title:     "[DBUG]",
+		ColorCode: pio.Yellow,
 	},
 }
 
@@ -98,19 +93,14 @@ type LevelMetadata struct {
 	// AlternativeNames = []string{"warning"}, it's an optional field,
 	// therefore we keep Name as a simple string and created this new field.
 	AlternativeNames []string
-	// Tha RawText will be the prefix of the log level
-	// when output doesn't supports colors.
-	//
-	// When RawText is changed its ColorfulText is also changed
-	// to a default color, but callers are able to change it too.
-	RawText string
-	// The ColorfulText will be the prefix of the log level
-	// when output supports colors, almost everything except
-	// os files and putty-based terminals(?).
-	//
-	// If ColorfulText is empty then built'n colors
-	// are being used to wrap the "RawText".
-	ColorfulText string
+	// Tha Title is the prefix of the log level.
+	// See `ColorCode` and `Style` too.
+	// Both `ColorCode` and `Style` should be respected across writers.
+	Title string
+	// ColorCode a color for the `Title`.
+	ColorCode int
+	// Style one or more rich options for the `Title`.
+	Style []pio.RichOption
 }
 
 // Text returns the text that should be
@@ -118,27 +108,17 @@ type LevelMetadata struct {
 // log level is being written.
 func (m *LevelMetadata) Text(enableColor bool) string {
 	if enableColor {
-		return m.ColorfulText
+		return pio.Rich(m.Title, m.ColorCode, m.Style...)
 	}
-	return m.RawText
+	return m.Title
 }
 
 // SetText can modify the prefix that will be prepended
 // to the output message log when `Error/Errorf` functions are being used.
-//
-// If "newRawText" is empty then it will just skip the Text set-ing.
-// If "newColorfulText" is empty then it will update the text color version using
-// the default values by using the new raw text.
-func (m *LevelMetadata) SetText(newRawText string, newColorfulText string) {
-	if newRawText != "" {
-		oldRawText := m.RawText
-		m.RawText = newRawText
-		m.ColorfulText = strings.Replace(m.ColorfulText, oldRawText, newRawText, -1)
-	}
-	if newColorfulText != "" {
-		m.ColorfulText = newColorfulText
-	}
-
+func (m *LevelMetadata) SetText(title string, colorCode int, style ...pio.RichOption) {
+	m.Title = title
+	m.ColorCode = colorCode
+	m.Style = style
 }
 
 var (
