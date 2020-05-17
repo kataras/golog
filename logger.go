@@ -26,7 +26,7 @@ type Handler func(value *Log) (handled bool)
 
 // Logger is our golog.
 type Logger struct {
-	Prefix     []byte
+	Prefix     string
 	Level      Level
 	TimeFormat string
 	// if new line should be added on all log functions, even the `F`s.
@@ -92,10 +92,6 @@ var logHijacker = func(ctx *pio.Ctx) {
 
 	w := ctx.Printer
 
-	if prefix := l.Logger.Prefix; len(prefix) > 0 {
-		fmt.Fprint(w, prefix)
-	}
-
 	if l.Level != DisableLevel {
 		if level, ok := Levels[l.Level]; ok {
 			pio.WriteRich(w, level.Title, level.ColorCode, level.Style...)
@@ -106,6 +102,10 @@ var logHijacker = func(ctx *pio.Ctx) {
 	if t := l.FormatTime(); t != "" {
 		fmt.Fprint(w, t)
 		w.Write(spaceBytes)
+	}
+
+	if prefix := l.Logger.Prefix; len(prefix) > 0 {
+		fmt.Fprintf(w, prefix)
 	}
 
 	fmt.Fprint(w, l.Message)
@@ -141,14 +141,13 @@ func (l *Logger) AddOutput(writers ...io.Writer) *Logger {
 
 // SetPrefix sets a prefix for this "l" Logger.
 //
-// The prefix is the first space-separated
-// word that is being presented to the output.
-// It's written even before the log level text.
+// The prefix is the text that is being presented
+// to the output right before the log's message.
 //
 // Returns itself.
 func (l *Logger) SetPrefix(s string) *Logger {
 	l.mu.Lock()
-	l.Prefix = []byte(s)
+	l.Prefix = s
 	l.mu.Unlock()
 	return l
 }
