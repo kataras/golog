@@ -291,6 +291,13 @@ func (l *Logger) Warnf(format string, args ...interface{}) {
 	l.Warn(msg)
 }
 
+// Warningf exactly the same as `Warnf`.
+// It's here for badger integration:
+// https://github.com/dgraph-io/badger/blob/ef28ef36b5923f12ffe3a1702bdfa6b479db6637/logger.go#L25
+func (l *Logger) Warningf(format string, args ...interface{}) {
+	l.Warnf(format, args...)
+}
+
 // Info will print when logger's Level is info or debug.
 func (l *Logger) Info(v ...interface{}) {
 	l.Log(InfoLevel, v...)

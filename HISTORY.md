@@ -1,3 +1,7 @@
+## Su 17 May 2020 | v0.0.13
+
+Add a `Warningf` method to complete the [dgraph-io/badger.Logger](https://github.com/dgraph-io/badger/blob/ef28ef36b5923f12ffe3a1702bdfa6b479db6637/logger.go#L27) interface.
+
 ## Tu 28 April 2020 | v0.0.12
 
 This release provides support for colorized log level per registered output. Log's level will be colorful for registered `io.Writer`(via `AddOutput`) that supports colors, even when the rest of the writers (e.g. files) don't.
