@@ -1,9 +1,23 @@
 package golog
 
-import "github.com/kataras/pio"
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/kataras/pio"
+)
 
 // Level is a number which defines the log level.
 type Level uint32
+
+// MarshalJSON implements the json marshaler for Level.
+func (l Level) MarshalJSON() ([]byte, error) {
+	if level, ok := Levels[l]; ok {
+		return []byte(strconv.Quote(level.Name)), nil
+	}
+
+	return nil, fmt.Errorf("unknown level %v", l)
+}
 
 // The available built'n log levels, users can add or modify a level via `Levels` field.
 const (

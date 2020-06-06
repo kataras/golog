@@ -1,3 +1,10 @@
+## Sa 06 June 2020 | v0.0.16
+
+- New `Fields` map type that can be passed to `Logf/Debugf/Infof/Warnf/Errorf/Fatalf` functions and set the `Log.Fields` data field (which can be retrieved through a custom `LogHandler`).
+- Add `Log.Stacktrace` of new `Frame` type which holds the callers stack trace when `Debug/Debugf`.
+- Add `json` struct fields to the `Log` structure.
+- Update the [customize-output](_examples/customize-output) example.
+
 ## Su 17 May 2020 | v0.0.14
 
 Add a `Warningf` method to complete the [dgraph-io/badger.Logger](https://github.com/dgraph-io/badger/blob/ef28ef36b5923f12ffe3a1702bdfa6b479db6637/logger.go#L27) interface **and set the `Prefix` text right before the log's actual message instead of the beginning of the log line.**
