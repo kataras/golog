@@ -1,4 +1,4 @@
-## Tu 09 June 2020 | v0.0.17
+## Tu 09 June 2020 | v0.0.18
 
 - New `SetStacktraceLimit` method. If 0 (default) all debug stacktrace will be logged, if negative the field is disabled.
 - If `TimeFormat` field is empty then `timestamp` field is disabled. 
