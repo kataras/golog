@@ -49,8 +49,16 @@ func SetPrefix(s string) *Logger {
 
 // SetTimeFormat sets time format for logs,
 // if "s" is empty then time representation will be off.
-func SetTimeFormat(s string) {
-	Default.SetTimeFormat(s)
+func SetTimeFormat(s string) *Logger {
+	return Default.SetTimeFormat(s)
+}
+
+// SetStacktraceLimit sets a stacktrace entries limit
+// on `Debug` level.
+// Zero means all number of stack entries will be logged.
+// Negative value disables the stacktrace field.
+func SetStacktraceLimit(limit int) *Logger {
+	return Default.SetStacktraceLimit(limit)
 }
 
 // SetLevel accepts a string representation of

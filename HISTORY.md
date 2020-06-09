@@ -1,3 +1,8 @@
+## Tu 09 June 2020 | v0.0.17
+
+- New `SetStacktraceLimit` method. If 0 (default) all debug stacktrace will be logged, if negative the field is disabled.
+- If `TimeFormat` field is empty then `timestamp` field is disabled. 
+
 ## Sa 06 June 2020 | v0.0.16
 
 - New `Fields` map type that can be passed to `Logf/Debugf/Infof/Warnf/Errorf/Fatalf` functions and set the `Log.Fields` data field (which can be retrieved through a custom `LogHandler`).

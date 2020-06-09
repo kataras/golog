@@ -29,6 +29,8 @@ type Logger struct {
 	Prefix     string
 	Level      Level
 	TimeFormat string
+	// Limit stacktrace entries on `Debug` level.
+	StacktraceLimit int
 	// if new line should be added on all log functions, even the `F`s.
 	// It defaults to true.
 	//
@@ -53,7 +55,7 @@ func New() *Logger {
 		Level:      InfoLevel,
 		TimeFormat: "2006/01/02 15:04",
 		NewLine:    true,
-		Printer:    pio.NewPrinter("", os.Stdout).EnableDirectOutput().Hijack(logHijacker),
+		Printer:    pio.NewPrinter("", os.Stdout).EnableDirectOutput().Hijack(logHijacker).SetSync(true),
 		children:   newLoggerMap(),
 	}
 }
@@ -74,8 +76,10 @@ func (l *Logger) acquireLog(level Level, msg string, withPrintln bool, fields Fi
 	}
 
 	log.NewLine = withPrintln
-	log.Time = time.Now()
-	log.Timestamp = log.Time.Unix()
+	if l.TimeFormat != "" {
+		log.Time = time.Now()
+		log.Timestamp = log.Time.Unix()
+	}
 	log.Level = level
 	log.Message = msg
 	log.Fields = fields
@@ -174,6 +178,18 @@ func (l *Logger) SetTimeFormat(s string) *Logger {
 	return l
 }
 
+// SetStacktraceLimit sets a stacktrace entries limit
+// on `Debug` level.
+// Zero means all number of stack entries will be logged.
+// Negative value disables the stacktrace field.
+func (l *Logger) SetStacktraceLimit(limit int) *Logger {
+	l.mu.Lock()
+	l.StacktraceLimit = limit
+	l.mu.Unlock()
+
+	return l
+}
+
 // DisableNewLine disables the new line suffix on every log function, even the `F`'s,
 // the caller should add "\n" to the log message manually after this call.
 //
@@ -215,7 +231,7 @@ func (l *Logger) print(level Level, msg string, newLine bool, fields Fields) {
 		// or by simply, Print.
 		log := l.acquireLog(level, msg, newLine, fields)
 		if level == DebugLevel {
-			log.Stacktrace = GetStacktrace()
+			log.Stacktrace = GetStacktrace(l.StacktraceLimit)
 		}
 		// if not handled by one of the handler
 		// then print it as usual.
@@ -447,8 +463,8 @@ func (l *Logger) Scan(r io.Reader) (cancel func()) {
 				return nil, pio.ErrMarshalNotResponsible
 			}
 
-			formattedTime := time.Now().Format(l.TimeFormat)
-			if formattedTime != "" {
+			if l.TimeFormat != "" {
+				formattedTime := time.Now().Format(l.TimeFormat)
 				line = append([]byte(formattedTime+" "), line...)
 			}
 

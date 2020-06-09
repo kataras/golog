@@ -15,7 +15,7 @@ type Log struct {
 	// Time is the time of fired.
 	Time time.Time `json:"-"`
 	// Timestamp is the unix time in second of fired.
-	Timestamp int64 `json:"timestamp"`
+	Timestamp int64 `json:"timestamp,omitempty"`
 	// Level is the log level.
 	Level Level `json:"level"`
 	// Message is the string reprensetation of the log's main body.
@@ -65,7 +65,11 @@ func (l *Log) FormatTime() string {
 var funcNameReplacer = strings.NewReplacer(")", "", "(", "", "*", "")
 
 // GetStacktrace tries to return the callers of this function.
-func GetStacktrace() (callerFrames []Frame) {
+func GetStacktrace(limit int) (callerFrames []Frame) {
+	if limit < 0 {
+		return nil
+	}
+
 	var pcs [32]uintptr
 	n := runtime.Callers(1, pcs[:])
 	frames := runtime.CallersFrames(pcs[:n])
@@ -99,6 +103,10 @@ func GetStacktrace() (callerFrames []Frame) {
 				Function: funcName,
 				Source:   fmt.Sprintf("%s:%d", f.File, f.Line),
 			})
+
+			if limit > 0 && len(callerFrames) >= limit {
+				break
+			}
 		}
 
 		if !more {
