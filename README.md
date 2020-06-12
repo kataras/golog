@@ -10,7 +10,7 @@ _golog_ is a simple, fast and easy-to-use level-based logger written entirely in
 [![github issues](https://img.shields.io/github/issues/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues?q=is%3Aopen+is%3Aissue)
 <!-- [![issue stats](https://img.shields.io/issuestats/i/github/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues) -->
 
-### 🥇 Features
+## 🥇 Features
 
 * Focus on high performance and agile perspective of things
 * Easy API and a default package-level instance, i.e `golog#Fatalf/Errorf/Warnf/Infof/Debugf`
@@ -25,7 +25,7 @@ _golog_ is a simple, fast and easy-to-use level-based logger written entirely in
 
 Navigate through [_examples](_examples/) and [integrations](_examples/integrations/) to learn if that fair solution suits your needs.
 
-### 🚀 Installation
+## 🚀 Installation
 
 The only requirement is the Go Programming Language[*](https://golang.org).
 
@@ -72,7 +72,7 @@ func main() {
 
     // Time Format defaults to: "2006/01/02 15:04"
     // you can change it to something else or disable it with:
-    golog.SetTimeFormat("")
+    // golog.SetTimeFormat("")
 
     // Level defaults to "info",
     // but you can change it:
@@ -87,7 +87,110 @@ func main() {
 }
 ```
 
-#### Examples
+## Log Levels
+
+| Name      | Method                  | Text     | Color              |
+| ----------|-------------------------|----------|--------------------|
+| `"fatal"` | `Fatal, Fatalf`         | `[FTAL]` | Red background     |
+| `"error"` | `Error, Errorf`         | `[ERRO]` | Red foreground     |
+| `"warn"`  | `Warn, Warnf, Warningf` | `[WARN]` | Magenta foreground |
+| `"info"`  | `Info, Infof`           | `[INFO]` | Cyan foreground    |
+| `"debug"` | `Debug, Debugf`         | `[DBUG]` | Yellow foreground  |
+
+### Helpers
+
+```go
+// GetTextForLevel returns the level's (rich) text. 
+fatalRichText := golog.GetTextForLevel(golog.FatalLevel, true)
+
+// fatalRichText == "\x1b[41m[FTAL]\x1b[0m"
+```
+
+```go
+// ParseLevel returns a Level based on its string name.
+level := golog.ParseLevel("debug")
+
+// level == golog.DebugLevel
+```
+
+### Customization
+
+You can customize the log level attributes.
+
+```go
+func init() {
+    // Levels contains a map of the log levels and their attributes.
+    errorAttrs := golog.Levels[golog.ErrorLevel]
+
+    // Change a log level's text.
+    customColorCode := 156
+    errorAttrs.SetText("custom text", customColorCode)
+
+    // Get (rch) text per log level.
+    enableColors := true
+    errorRichText := errorAttrs.Text(enableColors)
+}
+```
+
+Alternatively, to change a specific text on a known log level, you can just call:
+
+```go
+golog.ErrorText("custom text", 156)
+```
+
+## Integration
+
+The `golog.Logger` is using common, expected log methods, therefore you can integrate it with ease.
+
+Take for example the [badger](github.com/dgraph-io/badger) database. You want to add a prefix of `[badger]` in your logs  when badger wants to print something.
+
+1. Create a child logger with a prefix text using the `Child` function,
+2. disable new lines (because they are managed by badger itself) and you are ready to GO:
+
+```go
+opts := badger.DefaultOptions("./data")
+opts.Logger = golog.Child("[badger]").DisableNewLine()
+
+db, err := badger.Open(opts)
+// [...]
+```
+
+### Leveled and standard Loggers
+
+You can put `golog` in front of your existing loggers using the [Install](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Logger.Install) and [InstallStd](https://pkg.go.dev/github.com/kataras/golog?tab=doc#InstallStd) methods.
+
+Any leveled Logger that implements the [ExternalLogger](https://pkg.go.dev/github.com/kataras/golog?tab=doc#ExternalLogger) can be adapted.
+
+E.g. [sirupsen/logrus](https://github.com/sirupsen/logrus):
+
+```go
+// Simulate a logrus logger preparation.
+logrus.SetLevel(logrus.InfoLevel)
+logrus.SetFormatter(&logrus.JSONFormatter{})
+
+golog.Install(logrus.StandardLogger())
+
+golog.Debug(`this debug message will not be shown,
+    because the logrus level is InfoLevel`)
+golog.Error(`this error message will be visible as JSON,
+    because of logrus.JSONFormatter`)
+```
+
+Any standard logger (without level capabilities) that implements the [StdLogger](https://pkg.go.dev/github.com/kataras/golog?tab=doc#StdLogger) can be adapted using the [InstallStd](https://pkg.go.dev/github.com/kataras/golog?tab=doc#InstallStd) method.
+
+E.g. `log` standard package:
+
+```go
+// Simulate a log.Logger preparation.
+myLogger := log.New(os.Stdout, "", 0)
+
+golog.SetLevel("error")
+golog.InstallStd(myLogger)
+
+golog.Error("error message")
+```
+
+## Examples
 
 * [basic](_examples/basic/main.go)
 * [child](_examples/child/main.go)
@@ -100,7 +203,7 @@ func main() {
 * [log.Logger std integration](_examples/integrations/std/main.go)
 * [new instance](_examples/instance/main.go)
 
-### 🔥 Benchmarks
+## 🔥 Benchmarks
 
 | test | times ran (large is better) |  ns/op (small is better) | B/op (small is better) | allocs/op (small is better) |
 | -----------|--------|-------------|-------------|-------------|
@@ -109,11 +212,11 @@ func main() {
 
 Click [here](_benchmarks) for details.
 
-### 👥 Contributing
+## 👥 Contributing
 
 If you find that something is not working as expected please open an [issue](https://github.com/kataras/golog/issues).
 
-### 📦 Projects using golog
+## 📦 Projects using golog
 
 | Package | Author | Description |
 | -----------|--------|-------------|

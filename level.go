@@ -3,6 +3,7 @@ package golog
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/kataras/pio"
 )
@@ -80,17 +81,20 @@ var Levels = map[Level]*LevelMetadata{
 // Note that all existing log levels (name, prefix and color) can be customized
 // and new one can be added by the package-level `golog.Levels` map variable.
 func ParseLevel(levelName string) Level {
+	levelName = strings.ToLower(levelName)
+
 	for level, meta := range Levels {
-		if meta.Name == levelName {
+		if strings.ToLower(meta.Name) == levelName {
 			return level
 		}
 
 		for _, altName := range meta.AlternativeNames {
-			if altName == levelName {
+			if strings.ToLower(altName) == levelName {
 				return level
 			}
 		}
 	}
+
 	return DisableLevel
 }
 
