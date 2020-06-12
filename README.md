@@ -1,6 +1,6 @@
 # ✒️ golog
 
-_golog_ is a simple, fast and easy-to-use level-based logger written entirely in [GoLang](https://golang.org).
+_golog_ is a zero-dependency simple, fast and easy-to-use level-based logger written in [Go Programming Language](https://golang.org/dl).
 
 ![Output from win terminal](screen.png)
 
@@ -10,7 +10,7 @@ _golog_ is a simple, fast and easy-to-use level-based logger written entirely in
 [![github issues](https://img.shields.io/github/issues/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues?q=is%3Aopen+is%3Aissue)
 <!-- [![issue stats](https://img.shields.io/issuestats/i/github/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues) -->
 
-## 🥇 Features
+<!-- ## 🥇 Features
 
 * Focus on high performance and agile perspective of things
 * Easy API and a default package-level instance, i.e `golog#Fatalf/Errorf/Warnf/Infof/Debugf`
@@ -23,7 +23,7 @@ _golog_ is a simple, fast and easy-to-use level-based logger written entirely in
 * Incredible high-performant, 3 times faster than your favourite logger
 * Never-Panics
 
-Navigate through [_examples](_examples/) and [integrations](_examples/integrations/) to learn if that fair solution suits your needs.
+Navigate through [_examples](_examples/) and [integrations](_examples/integrations/) to learn if that fair solution suits your needs. -->
 
 ## 🚀 Installation
 
@@ -56,8 +56,6 @@ require (
 $ go get -u github.com/kataras/golog
 ```
 
-> golog is fairly built on top of the [pio library](https://github.com/kataras/pio), it has no more external dependencies.
-
 ```go
 package main
 
@@ -83,7 +81,8 @@ func main() {
     golog.Warn("This is a warning message")
     golog.Error("This is an error message")
     golog.Debug("This is a debug message")
-    golog.Fatal("Fatal will exit no matter what, but it will also print the log message if logger's Level is >=FatalLevel")
+    golog.Fatal(`Fatal will exit no matter what,
+    but it will also print the log message if logger's Level is >=FatalLevel`)
 }
 ```
 
@@ -96,6 +95,8 @@ func main() {
 | `"warn"`  | `Warn, Warnf, Warningf` | `[WARN]` | Magenta foreground |
 | `"info"`  | `Info, Infof`           | `[INFO]` | Cyan foreground    |
 | `"debug"` | `Debug, Debugf`         | `[DBUG]` | Yellow foreground  |
+
+> On debug level the logger will store stacktrace information to the log instance, which is not printed but can be accessed through a `Handler` (see below).
 
 ### Helpers
 
@@ -126,7 +127,7 @@ func init() {
     customColorCode := 156
     errorAttrs.SetText("custom text", customColorCode)
 
-    // Get (rch) text per log level.
+    // Get (rich) text per log level.
     enableColors := true
     errorRichText := errorAttrs.Text(enableColors)
 }
@@ -190,6 +191,66 @@ golog.InstallStd(myLogger)
 golog.Error("error message")
 ```
 
+## Output Format
+
+The Logger can accept functions to handle (and print) each [Log](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Log) through its [Handle](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Logger.Handle) method. The Handle method accepts a [Handler](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Handler).
+
+```go
+type Handler func(value *Log) (handled bool)
+```
+
+This method can be used to alter a Log's fields based on custom custom or to change the output destination and its **output format**.
+
+### JSON
+
+**Create a JSON handler**
+
+```go
+import "encoding/json"
+
+func jsonOutput(l *golog.Log) bool {
+    enc := json.NewEncoder(l.Logger.Printer)
+    enc.SetIndent("", "    ")
+    err := enc.Encode(l)
+    return err == nil
+}
+```
+
+**Register the handler and log something**
+
+```go
+import "github.com/kataras/golog"
+
+func main() {
+    golog.SetLevel("debug")
+    golog.Handle(jsonOutput)
+
+    // main.go#29
+    golog.Debugf("This is a %s with data (debug prints the stacktrace too)", "message", golog.Fields{
+        "username": "kataras",
+    })
+}
+```
+
+**Output**
+
+```json
+{
+    "timestamp": 1591423477,
+    "level": "debug",
+    "message": "This is a message with data (debug prints the stacktrace too)",
+    "fields": {
+        "username": "kataras"
+    },
+    "stacktrace": [
+        {
+            "function": "main.main",
+            "source": "C:/example/main.go:29"
+        }
+    ]
+}
+```
+
 ## Examples
 
 * [basic](_examples/basic/main.go)
@@ -215,16 +276,3 @@ Click [here](_benchmarks) for details.
 ## 👥 Contributing
 
 If you find that something is not working as expected please open an [issue](https://github.com/kataras/golog/issues).
-
-## 📦 Projects using golog
-
-| Package | Author | Description |
-| -----------|--------|-------------|
-| [iris](https://github.com/kataras/iris) | [Gerasimos Maropoulos](https://github.com/kataras) | The fastest web framework for Go in (THIS) Earth. HTTP/2 Ready-To-GO. Mobile Ready-To-GO. |
-
-> Do not hesitate to put your package on this list via [PR](https://github.com/kataras/golog/pulls)!
-
-<!--
-### ⚽ TODO
-
-- [x] Implement a way to be able to add custom levels with the full power of the built'n levels[*](HISTORY.md#su-30-july-2017-v006-v007) -->
