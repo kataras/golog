@@ -4,11 +4,7 @@ _golog_ is a zero-dependency simple, fast and easy-to-use level-based logger wri
 
 ![Output from win terminal](screen.png)
 
-[![build status](https://img.shields.io/travis/kataras/golog/master.svg?style=flat-square)](https://travis-ci.org/kataras/golog)
-[![report card](https://img.shields.io/badge/report%20card-a%2B-ff3333.svg?style=flat-square)](http://goreportcard.com/report/kataras/golog)
-[![godocs](https://img.shields.io/badge/online-documentation-0366d6.svg?style=flat-square)](https://godoc.org/github.com/kataras/golog)
-[![github issues](https://img.shields.io/github/issues/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues?q=is%3Aopen+is%3Aissue)
-<!-- [![issue stats](https://img.shields.io/issuestats/i/github/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues) -->
+[![build status](https://img.shields.io/travis/kataras/golog/master.svg?style=flat-square)](https://travis-ci.org/kataras/golog) [![report card](https://img.shields.io/badge/report%20card-a%2B-ff3333.svg?style=flat-square)](http://goreportcard.com/report/kataras/golog) [![godocs](https://img.shields.io/badge/online-documentation-0366d6.svg?style=flat-square)](https://godoc.org/github.com/kataras/golog) [![github issues](https://img.shields.io/github/issues/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues?q=is%3Aopen+is%3Aissue)
 
 <!-- ## 🥇 Features
 
@@ -156,11 +152,11 @@ db, err := badger.Open(opts)
 // [...]
 ```
 
-### Leveled and standard Loggers
+### Level-based and standard Loggers
 
 You can put `golog` in front of your existing loggers using the [Install](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Logger.Install) and [InstallStd](https://pkg.go.dev/github.com/kataras/golog?tab=doc#InstallStd) methods.
 
-Any leveled Logger that implements the [ExternalLogger](https://pkg.go.dev/github.com/kataras/golog?tab=doc#ExternalLogger) can be adapted.
+Any level-based Logger that implements the [ExternalLogger](https://pkg.go.dev/github.com/kataras/golog?tab=doc#ExternalLogger) can be adapted.
 
 E.g. [sirupsen/logrus](https://github.com/sirupsen/logrus):
 
@@ -199,7 +195,7 @@ The Logger can accept functions to handle (and print) each [Log](https://pkg.go.
 type Handler func(value *Log) (handled bool)
 ```
 
-This method can be used to alter a Log's fields based on custom custom or to change the output destination and its **output format**.
+This method can be used to alter Log's fields based on custom logic or to change the output destination and its **output format**.
 
 ### JSON
 
