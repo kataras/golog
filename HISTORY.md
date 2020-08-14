@@ -1,3 +1,7 @@
+## Fr 14 August 2020 | v0.0.19
+
+- Use locks on hijacker.
+
 ## Tu 09 June 2020 | v0.0.18
 
 - New `SetStacktraceLimit` method. If 0 (default) all debug stacktrace will be logged, if negative the field is disabled.

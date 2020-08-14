@@ -36,7 +36,7 @@ Source code and other details for the project are available at GitHub:
 
 Current Version
 
-0.0.18
+0.0.19
 
 Installation
 
@@ -390,4 +390,4 @@ Examples:
 package golog // import "github.com/kataras/golog"
 
 // Version is the version string representation of the "golog" package.
-const Version = "0.0.18"
+const Version = "0.0.19"

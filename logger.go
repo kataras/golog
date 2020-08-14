@@ -40,7 +40,7 @@ type Logger struct {
 	// if you want to customize the log message please read the examples
 	// or navigate to: https://github.com/kataras/golog/issues/3#issuecomment-355895870.
 	NewLine  bool
-	mu       sync.Mutex
+	mu       sync.Mutex // for logger field changes and printing through pio hijacker.
 	Printer  *pio.Printer
 	handlers []Handler
 	once     sync.Once
@@ -104,6 +104,10 @@ var logHijacker = func(ctx *pio.Ctx) {
 		return
 	}
 
+	logger := l.Logger
+	logger.mu.Lock()
+	defer logger.mu.Unlock()
+
 	w := ctx.Printer
 
 	if l.Level != DisableLevel {
@@ -118,13 +122,13 @@ var logHijacker = func(ctx *pio.Ctx) {
 		w.Write(spaceBytes)
 	}
 
-	if prefix := l.Logger.Prefix; len(prefix) > 0 {
+	if prefix := logger.Prefix; len(prefix) > 0 {
 		fmt.Fprintf(w, prefix)
 	}
 
 	fmt.Fprint(w, l.Message)
 
-	if l.Logger.NewLine {
+	if logger.NewLine {
 		fmt.Fprintln(w)
 	}
 
