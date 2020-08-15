@@ -29,6 +29,8 @@ func main() {
 	app1Logger.Infof("Hello App1")
 	app2Logger.Debugf("Hello App2")
 	app3Logger.Warnf("Hello App3")
+
+	srvLogger.LastChild().Infof("Hello App3 again")
 }
 
 type app struct {

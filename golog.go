@@ -229,3 +229,8 @@ func Child(key interface{}) *Logger {
 func SetChildPrefix(s string) *Logger {
 	return Default.SetChildPrefix(s)
 }
+
+// LastChild returns the last registered child Logger.
+func LastChild() *Logger {
+	return Default.LastChild()
+}

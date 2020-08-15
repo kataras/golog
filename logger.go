@@ -506,42 +506,6 @@ func (l *Logger) Child(key interface{}) *Logger {
 	return l.children.getOrAdd(key, l)
 }
 
-type loggerMap struct {
-	mu    sync.RWMutex
-	Items map[interface{}]*Logger
-}
-
-func newLoggerMap() *loggerMap {
-	return &loggerMap{
-		Items: make(map[interface{}]*Logger),
-	}
-}
-
-func (m *loggerMap) getOrAdd(key interface{}, parent *Logger) *Logger {
-	m.mu.RLock()
-	logger, ok := m.Items[key]
-	m.mu.RUnlock()
-	if ok {
-		return logger
-	}
-
-	logger = parent.Clone()
-	childPrefix := ""
-	switch v := key.(type) {
-	case string:
-		childPrefix = v
-	case fmt.Stringer:
-		childPrefix = v.String()
-	}
-	logger.SetChildPrefix(childPrefix)
-
-	m.mu.Lock()
-	m.Items[key] = logger
-	m.mu.Unlock()
-
-	return logger
-}
-
 // SetChildPrefix same as `SetPrefix` but it does NOT
 // override the existing, instead the given "prefix"
 // is appended to the current one. It's useful
@@ -568,4 +532,69 @@ func (l *Logger) SetChildPrefix(prefix string) *Logger {
 	l.mu.Unlock()
 
 	return l
+}
+
+// LastChild returns the last registered child Logger.
+func (l *Logger) LastChild() *Logger {
+	return l.children.getLast()
+}
+
+type loggerMap struct {
+	mu           sync.RWMutex
+	Items        map[interface{}]*Logger
+	itemsOrdered map[int]interface{} // registration order of logger and its key.
+}
+
+func newLoggerMap() *loggerMap {
+	return &loggerMap{
+		Items:        make(map[interface{}]*Logger),
+		itemsOrdered: make(map[int]interface{}),
+	}
+}
+
+func (m *loggerMap) getByIndex(index int) (l *Logger) {
+	m.mu.RLock()
+	if key, ok := m.itemsOrdered[index]; ok {
+		l = m.Items[key]
+	}
+	m.mu.RUnlock()
+
+	return l
+}
+
+func (m *loggerMap) getLast() *Logger {
+	m.mu.RLock()
+	n := len(m.Items)
+	m.mu.RUnlock()
+	if n == 0 {
+		return nil
+	}
+
+	return m.getByIndex(n - 1)
+}
+
+func (m *loggerMap) getOrAdd(key interface{}, parent *Logger) *Logger {
+	m.mu.RLock()
+	logger, ok := m.Items[key]
+	m.mu.RUnlock()
+	if ok {
+		return logger
+	}
+
+	logger = parent.Clone()
+	childPrefix := ""
+	switch v := key.(type) {
+	case string:
+		childPrefix = v
+	case fmt.Stringer:
+		childPrefix = v.String()
+	}
+	logger.SetChildPrefix(childPrefix)
+
+	m.mu.Lock()
+	m.itemsOrdered[len(m.Items)] = key
+	m.Items[key] = logger
+	m.mu.Unlock()
+
+	return logger
 }
