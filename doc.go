@@ -390,4 +390,4 @@ Examples:
 package golog // import "github.com/kataras/golog"
 
 // Version is the version string representation of the "golog" package.
-const Version = "0.0.19"
+const Version = "0.1.1"

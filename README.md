@@ -40,7 +40,7 @@ module your_project_name
 go 1.14
 
 require (
-    github.com/kataras/golog v0.0.19
+    github.com/kataras/golog v0.1.1
 )
 ```
 

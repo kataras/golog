@@ -1,3 +1,7 @@
+## Sa 15 August | v0.1.1
+
+- `Logger.Child` accepts an `interface{}` instead of `string`. This way you can register children for pointers without forcing to naming them. If the key is string, then it's used as prefix (like always did).
+
 ## Fr 14 August 2020 | v0.0.19
 
 - Use locks on hijacker.

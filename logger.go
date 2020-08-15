@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -496,44 +497,70 @@ func (l *Logger) Clone() *Logger {
 }
 
 // Child (creates if not exists and) returns a new child
-// Logger based on the "l"'s fields.
+// Logger based on the current logger's fields.
 //
 // Can be used to separate logs by category.
-func (l *Logger) Child(name string) *Logger {
-	return l.children.getOrAdd(name, l)
+// If the "key" is string then it's used as prefix,
+// which is appended to the current prefix one.
+func (l *Logger) Child(key interface{}) *Logger {
+	return l.children.getOrAdd(key, l)
 }
 
 type loggerMap struct {
 	mu    sync.RWMutex
-	Items map[string]*Logger
+	Items map[interface{}]*Logger
 }
 
 func newLoggerMap() *loggerMap {
 	return &loggerMap{
-		Items: make(map[string]*Logger),
+		Items: make(map[interface{}]*Logger),
 	}
 }
 
-func (m *loggerMap) getOrAdd(name string, parent *Logger) *Logger {
+func (m *loggerMap) getOrAdd(key interface{}, parent *Logger) *Logger {
 	m.mu.RLock()
-	logger, ok := m.Items[name]
+	logger, ok := m.Items[key]
 	m.mu.RUnlock()
 	if ok {
 		return logger
 	}
 
 	logger = parent.Clone()
-	prefix := name
-
-	// if prefix doesn't end with a whitespace, then add it here.
-	if lb := name[len(prefix)-1]; lb != ' ' {
-		prefix += ": "
+	if prefix, ok := key.(string); ok {
+		logger.SetChildPrefix(prefix)
 	}
 
-	logger.SetPrefix(prefix)
 	m.mu.Lock()
-	m.Items[name] = logger
+	m.Items[key] = logger
 	m.mu.Unlock()
 
 	return logger
+}
+
+// SetChildPrefix same as `SetPrefix` but it does NOT
+// override the existing, instead the given "prefix"
+// is appended to the current one. It's useful
+// to chian loggers with their own names/prefixes.
+// It does add the ": " in the end of "prefix" if it's missing.
+// It returns itself.
+func (l *Logger) SetChildPrefix(prefix string) *Logger {
+	if prefix == "" {
+		return l
+	}
+
+	// if prefix doesn't end with a whitespace, then add it here.
+	if !strings.HasSuffix(prefix, ": ") {
+		prefix += ": "
+	}
+
+	l.mu.Lock()
+	if l.Prefix != "" {
+		if !strings.HasSuffix(l.Prefix, " ") {
+			l.Prefix += " "
+		}
+	}
+	l.Prefix += prefix
+	l.mu.Unlock()
+
+	return l
 }
