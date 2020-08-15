@@ -1,6 +1,6 @@
-## Sa 15 August | v0.1.1
+## Sa 15 August | v0.1.2
 
-- `Logger.Child` accepts an `interface{}` instead of `string`. This way you can register children for pointers without forcing to naming them. If the key is string, then it's used as prefix (like always did).
+- `Logger.Child` accepts an `interface{}` instead of `string`. This way you can register children for pointers without forcing to naming them. If the key is string or completes the `fmt.Stringer` interface, then it's used as prefix (like always did).
 
 ## Fr 14 August 2020 | v0.0.19
 

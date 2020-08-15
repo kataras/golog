@@ -526,9 +526,14 @@ func (m *loggerMap) getOrAdd(key interface{}, parent *Logger) *Logger {
 	}
 
 	logger = parent.Clone()
-	if prefix, ok := key.(string); ok {
-		logger.SetChildPrefix(prefix)
+	childPrefix := ""
+	switch v := key.(type) {
+	case string:
+		childPrefix = v
+	case fmt.Stringer:
+		childPrefix = v.String()
 	}
+	logger.SetChildPrefix(childPrefix)
 
 	m.mu.Lock()
 	m.Items[key] = logger
