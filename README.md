@@ -189,13 +189,7 @@ golog.Error("error message")
 
 ## Output Format
 
-The Logger can accept functions to handle (and print) each [Log](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Log) through its [Handle](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Logger.Handle) method. The Handle method accepts a [Handler](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Handler).
-
-```go
-type Handler func(value *Log) (handled bool)
-```
-
-This method can be used to alter Log's fields based on custom logic or to change the output destination and its **output format**.
+Any value that completes the [Formatter interface](https://github.com/kataras/golog/blob/master/formatter.go) can be used to write to the (leveled) output writer. By default the `"json"` formatter is available.
 
 ### JSON
 
@@ -204,7 +198,7 @@ import "github.com/kataras/golog"
 
 func main() {
     golog.SetLevel("debug")
-	golog.SetFormat("json", "    ") // < --
+    golog.SetFormat("json", "    ") // < --
 
     // main.go#29
     golog.Debugf("This is a %s with data (debug prints the stacktrace too)", "message", golog.Fields{
@@ -255,6 +249,14 @@ type Formatter interface {
 ```
 
 ### Custom Format using `Handler`
+
+The Logger can accept functions to handle (and print) each [Log](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Log) through its [Handle](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Logger.Handle) method. The Handle method accepts a [Handler](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Handler).
+
+```go
+type Handler func(value *Log) (handled bool)
+```
+
+This method can be used to alter Log's fields based on custom logic or to change the output destination and its **output format**.
 
 **Create a JSON handler**
 
