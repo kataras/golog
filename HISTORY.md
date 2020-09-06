@@ -1,3 +1,7 @@
+## Su 06 September | v0.1.3
+
+Add `SetLevelOutput(levelName string, w io.Writer)` to customize the writer per level.
+
 ## Sa 15 August | v0.1.2
 
 - `Logger.Child` accepts an `interface{}` instead of `string`. This way you can register children for pointers without forcing to naming them. If the key is string or completes the `fmt.Stringer` interface, then it's used as prefix (like always did).

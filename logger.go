@@ -40,9 +40,12 @@ type Logger struct {
 	// Note that this will not override the time and level prefix,
 	// if you want to customize the log message please read the examples
 	// or navigate to: https://github.com/kataras/golog/issues/3#issuecomment-355895870.
-	NewLine  bool
-	mu       sync.Mutex // for logger field changes and printing through pio hijacker.
-	Printer  *pio.Printer
+	NewLine bool
+	mu      sync.Mutex // for logger field changes and printing through pio hijacker.
+	Printer *pio.Printer
+	// The per log level raw writers, optionally.
+	LevelOutput map[Level]io.Writer
+
 	handlers []Handler
 	once     sync.Once
 	logs     sync.Pool
@@ -53,11 +56,12 @@ type Logger struct {
 // and level to `InfoLevel`.
 func New() *Logger {
 	return &Logger{
-		Level:      InfoLevel,
-		TimeFormat: "2006/01/02 15:04",
-		NewLine:    true,
-		Printer:    pio.NewPrinter("", os.Stdout).EnableDirectOutput().Hijack(logHijacker).SetSync(true),
-		children:   newLoggerMap(),
+		Level:       InfoLevel,
+		TimeFormat:  "2006/01/02 15:04",
+		NewLine:     true,
+		Printer:     pio.NewPrinter("", os.Stdout).EnableDirectOutput().Hijack(logHijacker).SetSync(true),
+		LevelOutput: make(map[Level]io.Writer),
+		children:    newLoggerMap(),
 	}
 }
 
@@ -109,7 +113,10 @@ var logHijacker = func(ctx *pio.Ctx) {
 	logger.mu.Lock()
 	defer logger.mu.Unlock()
 
-	w := ctx.Printer
+	w, ok := logger.LevelOutput[l.Level]
+	if !ok {
+		w = ctx.Printer
+	}
 
 	if l.Level != DisableLevel {
 		if level, ok := Levels[l.Level]; ok {
@@ -204,6 +211,13 @@ func (l *Logger) DisableNewLine() *Logger {
 	l.NewLine = false
 	l.mu.Unlock()
 
+	return l
+}
+
+// SetLevelOutput sets a destination log output for the specific "levelName".
+// For multiple writers use the `io.Multiwriter` wrapper.
+func (l *Logger) SetLevelOutput(levelName string, w io.Writer) *Logger {
+	l.LevelOutput[ParseLevel(levelName)] = w
 	return l
 }
 
@@ -484,15 +498,16 @@ func (l *Logger) Scan(r io.Reader) (cancel func()) {
 // This copy is returned as pointer as well.
 func (l *Logger) Clone() *Logger {
 	return &Logger{
-		Prefix:     l.Prefix,
-		Level:      l.Level,
-		TimeFormat: l.TimeFormat,
-		NewLine:    l.NewLine,
-		Printer:    l.Printer,
-		handlers:   l.handlers,
-		children:   newLoggerMap(),
-		mu:         sync.Mutex{},
-		once:       sync.Once{},
+		Prefix:      l.Prefix,
+		Level:       l.Level,
+		TimeFormat:  l.TimeFormat,
+		NewLine:     l.NewLine,
+		Printer:     l.Printer,
+		LevelOutput: l.LevelOutput,
+		handlers:    l.handlers,
+		children:    newLoggerMap(),
+		mu:          sync.Mutex{},
+		once:        sync.Once{},
 	}
 }
 

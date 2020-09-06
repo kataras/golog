@@ -37,10 +37,10 @@ Or edit your project's go.mod file and execute $ go build.
 ```bash
 module your_project_name
 
-go 1.14
+go 1.15
 
 require (
-    github.com/kataras/golog v0.1.2
+    github.com/kataras/golog v0.1.3
 )
 ```
 
@@ -250,6 +250,7 @@ func main() {
 ## Examples
 
 * [basic](_examples/basic/main.go)
+* [output per level](_examples/level-output/main.go)
 * [child](_examples/child/main.go)
 * [add new level](_examples/customize-levels/new-level/main.go)
 * [change text and color](_examples/customize-levels/text-and-colors/main.go)

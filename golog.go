@@ -61,6 +61,12 @@ func SetStacktraceLimit(limit int) *Logger {
 	return Default.SetStacktraceLimit(limit)
 }
 
+// SetLevelOutput sets a destination log output for the specific "levelName".
+// For multiple writers use the `io.Multiwriter` wrapper.
+func SetLevelOutput(levelName string, w io.Writer) *Logger {
+	return Default.SetLevelOutput(levelName, w)
+}
+
 // SetLevel accepts a string representation of
 // a `Level` and returns a `Level` value based on that "levelName".
 //
