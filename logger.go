@@ -497,13 +497,19 @@ func (l *Logger) Scan(r io.Reader) (cancel func()) {
 // Clone returns a copy of this "l" Logger.
 // This copy is returned as pointer as well.
 func (l *Logger) Clone() *Logger {
+	// copy level output map.
+	levelOutput := make(map[Level]io.Writer, len(l.LevelOutput))
+	for k, v := range l.LevelOutput {
+		levelOutput[k] = v
+	}
+
 	return &Logger{
 		Prefix:      l.Prefix,
 		Level:       l.Level,
 		TimeFormat:  l.TimeFormat,
 		NewLine:     l.NewLine,
 		Printer:     l.Printer,
-		LevelOutput: l.LevelOutput,
+		LevelOutput: levelOutput,
 		handlers:    l.handlers,
 		children:    newLoggerMap(),
 		mu:          sync.Mutex{},
