@@ -1,8 +1,15 @@
+## Mo 07 September | v0.1.5
+
+Introduce the [Formatter](https://github.com/kataras/golog/blob/master/formatter.go) interface. [Example](https://github.com/kataras/golog/tree/master/_examples/customize-output).
+
+- Add `Logger.RegisterFormatter(Formatter)` to register a custom `Formatter`.
+- Add `Logger.SetFormat(formatter string, opts ...interface{})` to set the default formatter for all log levels.
+- Add `Logger.SetLevelFormat(levelName string, formatter string, opts ...interface{})` to change the output format for the given "levelName".
+
 ## Su 06 September | v0.1.3 and v0.1.4
 
 - Add `Logger.SetLevelOutput(levelName string, w io.Writer)` to customize the writer per level.
 - Add `Logger.GetLevelOutput(levelName string) io.Writer` to get the leveled output or the default one.
-- Add `JSON(indent string) Handler` as a helper for JSON format: `Logger.Handle(golog.JSON("   "))`.
 
 ## Sa 15 August | v0.1.2
 

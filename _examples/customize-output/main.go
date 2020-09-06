@@ -5,7 +5,9 @@ import "github.com/kataras/golog"
 func main() {
 	golog.SetLevel("debug")
 
-	golog.Handle(golog.JSON("    ")) // < --
+	golog.SetFormat("json", "    ") // < --
+	// To register a custom formatter:
+	// golog.RegisterFormatter(golog.Formatter...)
 	/* Example Output:
 	{
 	    "timestamp": 1591423477,

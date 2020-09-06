@@ -204,7 +204,7 @@ import "github.com/kataras/golog"
 
 func main() {
     golog.SetLevel("debug")
-    golog.Handle(golog.JSON("    "))
+	golog.SetFormat("json", "    ") // < --
 
     // main.go#29
     golog.Debugf("This is a %s with data (debug prints the stacktrace too)", "message", golog.Fields{
@@ -232,7 +232,29 @@ func main() {
 }
 ```
 
-### Custom Format
+### Register custom Formatter
+
+```go
+golog.RegisterFormatter(new(myFormatter))
+golog.SetFormat("myformat", options...)
+```
+
+The `Formatter` interface looks like this:
+
+```go
+// Formatter is responsible to print a log to the logger's writer.
+type Formatter interface {
+	// The name of the formatter.
+	String() string
+	// Set any options and return a clone,
+	// generic. See `Logger.SetFormat`.
+	Options(opts ...interface{}) Formatter
+	// Writes the "log" to "dest" logger.
+	Format(dest io.Writer, log *Log) bool
+}
+```
+
+### Custom Format using `Handler`
 
 **Create a JSON handler**
 

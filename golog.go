@@ -61,6 +61,21 @@ func SetStacktraceLimit(limit int) *Logger {
 	return Default.SetStacktraceLimit(limit)
 }
 
+// RegisterFormatter registers a Formatter for this logger.
+func RegisterFormatter(f Formatter) *Logger {
+	return Default.RegisterFormatter(f)
+}
+
+// SetFormat sets a default formatter for all log levels.
+func SetFormat(formatter string, opts ...interface{}) *Logger {
+	return Default.SetFormat(formatter, opts...)
+}
+
+// SetLevelFormat changes the output format for the given "levelName".
+func SetLevelFormat(levelName string, formatter string, opts ...interface{}) *Logger {
+	return Default.SetLevelFormat(levelName, formatter, opts...)
+}
+
 // SetLevelOutput sets a destination log output for the specific "levelName".
 // For multiple writers use the `io.Multiwriter` wrapper.
 func SetLevelOutput(levelName string, w io.Writer) *Logger {

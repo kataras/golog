@@ -46,6 +46,10 @@ type Logger struct {
 	// The per log level raw writers, optionally.
 	LevelOutput map[Level]io.Writer
 
+	formatters     map[string]Formatter // available formatters.
+	formatter      Formatter            // the current formatter for all logs.
+	LevelFormatter map[Level]Formatter  // per level formatter.
+
 	handlers []Handler
 	once     sync.Once
 	logs     sync.Pool
@@ -61,7 +65,11 @@ func New() *Logger {
 		NewLine:     true,
 		Printer:     pio.NewPrinter("", os.Stdout).EnableDirectOutput().Hijack(logHijacker).SetSync(true),
 		LevelOutput: make(map[Level]io.Writer),
-		children:    newLoggerMap(),
+		formatters: map[string]Formatter{ // the available builtin formatters.
+			"json": new(JSONFormatter),
+		},
+		LevelFormatter: make(map[Level]Formatter),
+		children:       newLoggerMap(),
 	}
 }
 
@@ -113,7 +121,13 @@ var logHijacker = func(ctx *pio.Ctx) {
 	logger.mu.Lock()
 	defer logger.mu.Unlock()
 
-	w := logger.getLevelOutput(l.Level)
+	w := logger.getOutput(l.Level)
+	if f := logger.getFormatter(); f != nil {
+		if f.Format(w, l) {
+			ctx.Store(nil, pio.ErrHandled)
+			return
+		}
+	}
 
 	if l.Level != DisableLevel {
 		if level, ok := Levels[l.Level]; ok {
@@ -211,6 +225,57 @@ func (l *Logger) DisableNewLine() *Logger {
 	return l
 }
 
+// RegisterFormatter registers a Formatter for this logger.
+func (l *Logger) RegisterFormatter(f Formatter) *Logger {
+	l.mu.Lock()
+	l.formatters[f.String()] = f
+	l.mu.Unlock()
+	return l
+}
+
+// SetFormat sets a formatter for all logger's logs.
+func (l *Logger) SetFormat(formatter string, opts ...interface{}) *Logger {
+	l.mu.RLock()
+	f, ok := l.formatters[formatter]
+	l.mu.RUnlock()
+
+	if ok {
+		l.mu.Lock()
+		l.formatter = f.Options(opts...)
+		l.mu.Unlock()
+	}
+
+	return l
+}
+
+// SetLevelFormat changes the output format for the given "levelName".
+func (l *Logger) SetLevelFormat(levelName string, formatter string, opts ...interface{}) *Logger {
+	l.mu.RLock()
+	f, ok := l.formatters[formatter]
+	l.mu.RUnlock()
+
+	if ok {
+		l.mu.Lock()
+		l.LevelFormatter[ParseLevel(levelName)] = f.Options(opts...)
+		l.mu.Unlock()
+	}
+
+	return l
+}
+
+func (l *Logger) getFormatter() Formatter {
+	f, ok := l.LevelFormatter[l.Level]
+	if !ok {
+		if l.formatter != nil {
+			f = l.formatter
+		} else {
+			f = nil
+		}
+	}
+
+	return f
+}
+
 // SetLevelOutput sets a destination log output for the specific "levelName".
 // For multiple writers use the `io.Multiwriter` wrapper.
 func (l *Logger) SetLevelOutput(levelName string, w io.Writer) *Logger {
@@ -225,12 +290,12 @@ func (l *Logger) SetLevelOutput(levelName string, w io.Writer) *Logger {
 // the logger's default printer. It does NOT return nil.
 func (l *Logger) GetLevelOutput(levelName string) io.Writer {
 	l.mu.RLock()
-	w := l.getLevelOutput(ParseLevel(levelName))
+	w := l.getOutput(ParseLevel(levelName))
 	l.mu.RUnlock()
 	return w
 }
 
-func (l *Logger) getLevelOutput(level Level) io.Writer {
+func (l *Logger) getOutput(level Level) io.Writer {
 	w, ok := l.LevelOutput[level]
 	if !ok {
 		w = l.Printer
@@ -514,23 +579,34 @@ func (l *Logger) Scan(r io.Reader) (cancel func()) {
 // Clone returns a copy of this "l" Logger.
 // This copy is returned as pointer as well.
 func (l *Logger) Clone() *Logger {
-	// copy level output map.
+	// copy level output and format maps.
+	formats := make(map[string]Formatter, len(l.formatters))
+	for k, v := range formats {
+		formats[k] = v
+	}
+	levelFormat := make(map[Level]Formatter, len(l.LevelFormatter))
+	for k, v := range l.LevelFormatter {
+		levelFormat[k] = v
+	}
 	levelOutput := make(map[Level]io.Writer, len(l.LevelOutput))
 	for k, v := range l.LevelOutput {
 		levelOutput[k] = v
 	}
 
 	return &Logger{
-		Prefix:      l.Prefix,
-		Level:       l.Level,
-		TimeFormat:  l.TimeFormat,
-		NewLine:     l.NewLine,
-		Printer:     l.Printer,
-		LevelOutput: levelOutput,
-		handlers:    l.handlers,
-		children:    newLoggerMap(),
-		mu:          sync.RWMutex{},
-		once:        sync.Once{},
+		Prefix:         l.Prefix,
+		Level:          l.Level,
+		TimeFormat:     l.TimeFormat,
+		NewLine:        l.NewLine,
+		Printer:        l.Printer,
+		LevelOutput:    levelOutput,
+		formatter:      l.formatter,
+		formatters:     formats,
+		LevelFormatter: levelFormat,
+		handlers:       l.handlers,
+		children:       newLoggerMap(),
+		mu:             sync.RWMutex{},
+		once:           sync.Once{},
 	}
 }
 
