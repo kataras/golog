@@ -1,15 +1,11 @@
 package main
 
-import (
-	"encoding/json"
-
-	"github.com/kataras/golog"
-)
+import "github.com/kataras/golog"
 
 func main() {
 	golog.SetLevel("debug")
-	golog.Handle(jsonOutput) // <---
 
+	golog.Handle(golog.JSON("    ")) // < --
 	/* Example Output:
 	{
 	    "timestamp": 1591423477,
@@ -46,9 +42,13 @@ func main() {
 	golog.Errorf("Something went wrong!")
 }
 
+/* Manually, use it for any custom format:
+golog.Handle(jsonOutput)
+
 func jsonOutput(l *golog.Log) bool {
 	enc := json.NewEncoder(l.Logger.Printer)
 	enc.SetIndent("", "    ")
 	err := enc.Encode(l)
 	return err == nil
 }
+*/

@@ -41,7 +41,7 @@ type Logger struct {
 	// if you want to customize the log message please read the examples
 	// or navigate to: https://github.com/kataras/golog/issues/3#issuecomment-355895870.
 	NewLine bool
-	mu      sync.Mutex // for logger field changes and printing through pio hijacker.
+	mu      sync.RWMutex // for logger field changes and printing through pio hijacker.
 	Printer *pio.Printer
 	// The per log level raw writers, optionally.
 	LevelOutput map[Level]io.Writer
@@ -113,10 +113,7 @@ var logHijacker = func(ctx *pio.Ctx) {
 	logger.mu.Lock()
 	defer logger.mu.Unlock()
 
-	w, ok := logger.LevelOutput[l.Level]
-	if !ok {
-		w = ctx.Printer
-	}
+	w := logger.getLevelOutput(l.Level)
 
 	if l.Level != DisableLevel {
 		if level, ok := Levels[l.Level]; ok {
@@ -217,8 +214,28 @@ func (l *Logger) DisableNewLine() *Logger {
 // SetLevelOutput sets a destination log output for the specific "levelName".
 // For multiple writers use the `io.Multiwriter` wrapper.
 func (l *Logger) SetLevelOutput(levelName string, w io.Writer) *Logger {
+	l.mu.Lock()
 	l.LevelOutput[ParseLevel(levelName)] = w
+	l.mu.Unlock()
 	return l
+}
+
+// GetLevelOutput returns the responsible writer for the given "levelName".
+// If not a registered writer is set for that level then it returns
+// the logger's default printer. It does NOT return nil.
+func (l *Logger) GetLevelOutput(levelName string) io.Writer {
+	l.mu.RLock()
+	w := l.getLevelOutput(ParseLevel(levelName))
+	l.mu.RUnlock()
+	return w
+}
+
+func (l *Logger) getLevelOutput(level Level) io.Writer {
+	w, ok := l.LevelOutput[level]
+	if !ok {
+		w = l.Printer
+	}
+	return w
 }
 
 // SetLevel accepts a string representation of
@@ -512,7 +529,7 @@ func (l *Logger) Clone() *Logger {
 		LevelOutput: levelOutput,
 		handlers:    l.handlers,
 		children:    newLoggerMap(),
-		mu:          sync.Mutex{},
+		mu:          sync.RWMutex{},
 		once:        sync.Once{},
 	}
 }

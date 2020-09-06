@@ -1,6 +1,8 @@
-## Su 06 September | v0.1.3
+## Su 06 September | v0.1.3 and v0.1.4
 
-Add `SetLevelOutput(levelName string, w io.Writer)` to customize the writer per level.
+- Add `Logger.SetLevelOutput(levelName string, w io.Writer)` to customize the writer per level.
+- Add `Logger.GetLevelOutput(levelName string) io.Writer` to get the leveled output or the default one.
+- Add `JSON(indent string) Handler` as a helper for JSON format: `Logger.Handle(golog.JSON("   "))`.
 
 ## Sa 15 August | v0.1.2
 

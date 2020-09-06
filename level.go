@@ -20,6 +20,16 @@ func (l Level) MarshalJSON() ([]byte, error) {
 	return nil, fmt.Errorf("unknown level %v", l)
 }
 
+// String implements the fmt.Stringer interface for level.
+// Returns the level's name.
+func (l Level) String() string {
+	if level, ok := Levels[l]; ok {
+		return level.Name
+	}
+
+	return ""
+}
+
 // The available built'n log levels, users can add or modify a level via `Levels` field.
 const (
 	// DisableLevel will disable the printer.

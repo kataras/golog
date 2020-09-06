@@ -67,6 +67,13 @@ func SetLevelOutput(levelName string, w io.Writer) *Logger {
 	return Default.SetLevelOutput(levelName, w)
 }
 
+// GetLevelOutput returns the responsible writer for the given "levelName".
+// If not a registered writer is set for that level then it returns
+// the logger's default printer. It does NOT return nil.
+func GetLevelOutput(levelName string) io.Writer {
+	return Default.GetLevelOutput(levelName)
+}
+
 // SetLevel accepts a string representation of
 // a `Level` and returns a `Level` value based on that "levelName".
 //

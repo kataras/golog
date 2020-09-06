@@ -40,7 +40,7 @@ module your_project_name
 go 1.15
 
 require (
-    github.com/kataras/golog v0.1.3
+    github.com/kataras/golog v0.1.4
 )
 ```
 
@@ -199,27 +199,12 @@ This method can be used to alter Log's fields based on custom logic or to change
 
 ### JSON
 
-**Create a JSON handler**
-
-```go
-import "encoding/json"
-
-func jsonOutput(l *golog.Log) bool {
-    enc := json.NewEncoder(l.Logger.Printer)
-    enc.SetIndent("", "    ")
-    err := enc.Encode(l)
-    return err == nil
-}
-```
-
-**Register the handler and log something**
-
 ```go
 import "github.com/kataras/golog"
 
 func main() {
     golog.SetLevel("debug")
-    golog.Handle(jsonOutput)
+    golog.Handle(golog.JSON("    "))
 
     // main.go#29
     golog.Debugf("This is a %s with data (debug prints the stacktrace too)", "message", golog.Fields{
@@ -244,6 +229,37 @@ func main() {
             "source": "C:/example/main.go:29"
         }
     ]
+}
+```
+
+### Custom Format
+
+**Create a JSON handler**
+
+```go
+import "encoding/json"
+
+func jsonOutput(l *golog.Log) bool {
+    enc := json.NewEncoder(l.Logger.GetLevelOutput(l.Level.String()))
+    enc.SetIndent("", "    ")
+    err := enc.Encode(l)
+    return err == nil
+}
+```
+
+**Register the handler and log something**
+
+```go
+import "github.com/kataras/golog"
+
+func main() {
+    golog.SetLevel("debug")
+    golog.Handle(jsonOutput)
+
+    // main.go#29
+    golog.Debugf("This is a %s with data (debug prints the stacktrace too)", "message", golog.Fields{
+        "username": "kataras",
+    })
 }
 ```
 
