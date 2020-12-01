@@ -581,7 +581,7 @@ func (l *Logger) Scan(r io.Reader) (cancel func()) {
 func (l *Logger) Clone() *Logger {
 	// copy level output and format maps.
 	formats := make(map[string]Formatter, len(l.formatters))
-	for k, v := range formats {
+	for k, v := range l.formatters {
 		formats[k] = v
 	}
 	levelFormat := make(map[Level]Formatter, len(l.LevelFormatter))
