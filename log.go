@@ -83,7 +83,9 @@ func GetStacktrace(limit int) (callerFrames []Frame) {
 		}
 
 		if strings.Contains(file, "github.com/kataras/golog") &&
-			!(strings.Contains(file, "_examples") || strings.Contains(file, "_test.go")) {
+			!(strings.Contains(file, "_examples") ||
+				strings.Contains(file, "_test.go") ||
+				strings.Contains(file, "integration.go")) {
 			continue
 		}
 

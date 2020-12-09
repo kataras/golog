@@ -21,7 +21,10 @@ type Formatter interface {
 type JSONFormatter struct {
 	Indent string
 
-	// use one encoder per level, do not create new each time.
+	// Use one encoder per level, do not create new each time.
+	// Even if the jser can set a different formatter for each level
+	// on SetLevelFormat, the encoding's writers may be different
+	// if that ^ is not called but SetLevelOutput did provide a different writer.
 	encoders map[Level]*json.Encoder
 	mu       sync.RWMutex // encoders locker.
 	encMu    sync.Mutex   // encode action locker.

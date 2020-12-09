@@ -22,6 +22,7 @@ func main() {
 	if err != nil {
 		golog.Fatal(err)
 	}
+	defer w.Close()
 
 	golog.SetOutput(w)
 

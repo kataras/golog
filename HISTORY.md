@@ -1,3 +1,7 @@
+## Wed 09 Decemember | v0.1.6
+
+Fix `Clone` not inherite the parent's formatters field (fixes `SetLevelFormat` on childs).
+
 ## Mo 07 September | v0.1.5
 
 Introduce the [Formatter](https://github.com/kataras/golog/blob/master/formatter.go) interface. [Example](https://github.com/kataras/golog/tree/master/_examples/customize-output).
