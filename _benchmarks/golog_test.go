@@ -30,5 +30,5 @@ func printGolog(i int) {
 	golog.Errorf("[%d] This is an error message", i)
 	golog.Warnf("[%d] This is a warning message", i)
 	golog.Infof("[%d] This is an info message", i)
-	golog.Debugf("[%d] This is a debug message", i)
+	// Debug on golog prints the whole stacktrace, while logrus does not, don't include that.
 }

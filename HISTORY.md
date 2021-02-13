@@ -30,7 +30,7 @@ Introduce the [Formatter](https://github.com/kataras/golog/blob/master/formatter
 
 ## Sa 06 June 2020 | v0.0.16
 
-- New `Fields` map type that can be passed to `Logf/Debugf/Infof/Warnf/Errorf/Fatalf` functions and set the `Log.Fields` data field (which can be retrieved through a custom `LogHandler`).
+- New `Fields` type that can be passed to `Logf/Debugf/Infof/Warnf/Errorf/Fatalf` functions and set the `Log.Fields` data field (which can be retrieved through a custom `LogHandler`).
 - Add `Log.Stacktrace` of new `Frame` type which holds the callers stack trace when `Debug/Debugf`.
 - Add `json` struct fields to the `Log` structure.
 - Update the [customize-output](_examples/customize-output) example.

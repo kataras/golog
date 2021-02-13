@@ -1,5 +1,3 @@
-// +build ignore
-
 package benchmarks
 
 import (
@@ -27,8 +25,7 @@ func BenchmarkStdPrint(b *testing.B) {
 }
 
 func printStd(i int) {
-	log.Printf("[%d] [%s] This is an error message\n", i, pio.Red("[ERRO]"))
-	log.Printf("[%d] [%s] This is a warning message\n", i, pio.Purple("[WARN]"))
-	log.Printf("[%d] [%s] This is an info message\n", i, pio.LightGreen("[INFO]"))
-	log.Printf("[%d] [%s] This is a debug message\n", i, pio.Yellow("[DBUG]"))
+	log.Printf("[%d] [%s] This is an error message\n", i, pio.Rich("[ERRO]", pio.Red))
+	log.Printf("[%d] [%s] This is a warning message\n", i, pio.Rich("[WARN]", pio.Magenta))
+	log.Printf("[%d] [%s] This is an info message\n", i, pio.Rich("[INFO]", pio.Green))
 }

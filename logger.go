@@ -73,7 +73,7 @@ func New() *Logger {
 	}
 }
 
-// Fields is just a custom type of the map type.
+// Fields is a map type.
 // One or more values of `Fields` type can be passed
 // on all Log methods except `Print/Printf/Println` to set the `Log.Fields` field,
 // which can be accessed through a custom LogHandler.
@@ -368,26 +368,26 @@ func (l *Logger) Println(v ...interface{}) {
 	l.print(DisableLevel, fmt.Sprint(v...), true, nil)
 }
 
-func splitArgsFields(v []interface{}) ([]interface{}, Fields) {
+func splitArgsFields(values []interface{}) ([]interface{}, Fields) {
 	var (
-		args   = v[:0]
+		args   = values[:0]
 		fields Fields
 	)
 
-	for _, val := range v {
-		f, ok := val.(Fields)
-		if ok {
-			if len(fields) > 0 { // upsert new values.
-				for k, v := range f {
-					fields[k] = v
-				}
-			} else {
-				fields = f // set fields.
+	for _, value := range values {
+		if f, ok := value.(Fields); ok {
+			if fields == nil {
+				fields = make(Fields)
 			}
+
+			for k, v := range f {
+				fields[k] = v
+			}
+
 			continue
 		}
 
-		args = append(args, val) // use it as fmt argument.
+		args = append(args, value) // use it as fmt argument.
 	}
 
 	return args, fields
@@ -408,8 +408,11 @@ func (l *Logger) Log(level Level, v ...interface{}) {
 // It adds a new line in the end.
 func (l *Logger) Logf(level Level, format string, args ...interface{}) {
 	if l.Level >= level {
-		args, fields := splitArgsFields(args)
-		msg := fmt.Sprintf(format, args...)
+		arguments, fields := splitArgsFields(args)
+		msg := format
+		if len(arguments) > 0 {
+			msg = fmt.Sprintf(msg, arguments...)
+		}
 		l.print(level, msg, l.NewLine, fields)
 	}
 }
