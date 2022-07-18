@@ -1,10 +1,11 @@
+sudo: false
 language: go
 os:
   - linux
 #  - osx
 go:
-  - "go1.9"
-  - "go1.10"
+  - 1.14.x
+  - 1.15.x
 go_import_path: github.com/kataras/golog
 install:
   - go get ./...
@@ -14,7 +15,7 @@ after_script:
   # examples
   - cd ./_examples
   - go get ./...
-  - go test -v -cover ./...
+  - go test -v -race -cover ./...
   - cd ../
   # benchmarks
   - cd ./_benchmarks

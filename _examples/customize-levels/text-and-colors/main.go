@@ -7,20 +7,17 @@ import (
 func main() {
 
 	// First argument is the raw text for outputs
-	// that are not support colors,
-	// second argument is the full colorful text (yes it can be different if you wish to).
-	//
-	// If the second argument is empty then golog will update the colorful text to the
-	// default color (i.e red on ErrorText) based on the first argument.
+	// second argument is the color code
+	// and the last, variadic argument can be any `kataras/pio.RichOption`, e.g. pio.Background, pio.Underline.
 
 	// Default is "[ERRO]"
-	golog.ErrorText("|ERROR|", "")
+	golog.ErrorText("|ERROR|", 31)
 	// Default is "[WARN]"
-	golog.WarnText("|WARN|", "")
+	golog.WarnText("|WARN|", 32)
 	// Default is "[INFO]"
-	golog.InfoText("|INFO|", "")
+	golog.InfoText("|INFO|", 34)
 	// Default is "[DBUG]"
-	golog.DebugText("|DEBUG|", "")
+	golog.DebugText("|DEBUG|", 33)
 
 	// Business as usual...
 	golog.SetLevel("debug")

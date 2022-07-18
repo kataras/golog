@@ -21,10 +21,9 @@ func main() {
 	var SuccessLevel golog.Level = 6
 	// Register our level, just three fields.
 	golog.Levels[SuccessLevel] = &golog.LevelMetadata{
-		Name:    "success",
-		RawText: "[SUCC]",
-		// ColorfulText (Green Color[SUCC])
-		ColorfulText: "\x1b[32m[SUCC]\x1b[0m",
+		Name:      "success",
+		Title:     "[SUCC]",
+		ColorCode: 32, // Green
 	}
 
 	// create a new golog logger

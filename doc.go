@@ -1,31 +1,32 @@
-// Copyright (c) 2017 Gerasimos Maropoulos.
-// All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-//    * Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//    * Redistributions in binary form must reproduce the above
-// copyright notice, this list of conditions and the following disclaimer
-// in the documentation and/or other materials provided with the
-// distribution.
-//    * Neither the name of golog nor the names of its
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/*
+Copyright (c) 2017-2021 Gerasimos Maropoulos.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of golog nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /*
 Package golog provides an easy to use foundation for your logging operations.
@@ -36,7 +37,7 @@ Source code and other details for the project are available at GitHub:
 
 Current Version
 
-0.0.8
+0.1.7
 
 Installation
 
@@ -180,20 +181,17 @@ Example Code:
 	func main() {
 
 		// First argument is the raw text for outputs
-		// that are not support colors,
-		// second argument is the full colorful text (yes it can be different if you wish to).
-		//
-		// If the second argument is empty then golog will update the colorful text to the
-		// default color (i.e red on ErrorText) based on the first argument.
+		// second argument is the color code
+		// and the last, variadic argument can be any `kataras/pio.RichOption`, e.g. pio.Background, pio.Underline.
 
 		// Default is "[ERRO]"
-		golog.ErrorText("|ERROR|", "")
+		golog.ErrorText("|ERROR|", 31)
 		// Default is "[WARN]"
-		golog.WarnText("|WARN|", "")
+		golog.WarnText("|WARN|", 32)
 		// Default is "[INFO]"
-		golog.InfoText("|INFO|", "")
+		golog.InfoText("|INFO|", 34)
 		// Default is "[DBUG]"
-		golog.DebugText("|DEBUG|", "")
+		golog.DebugText("|DEBUG|", 33)
 
 		// Business as usual...
 		golog.SetLevel("debug")
@@ -234,10 +232,9 @@ Example Code:
 		var SuccessLevel golog.Level = 6
 		// Register our level, just three fields.
 		golog.Levels[SuccessLevel] = &golog.LevelMetadata{
-			Name:    "success",
-			RawText: "[SUCC]",
-			// ColorfulText (Green Color[SUCC])
-			ColorfulText: "\x1b[32m[SUCC]\x1b[0m",
+			Name:      "success",
+			Title:     "[SUCC]",
+			ColorCode: 32, // Green
 		}
 
 		// create a new golog logger
@@ -389,9 +386,8 @@ If you enjoy what you just saw and want to learn more, please follow the below l
 Examples:
 
 	https://github.com/kataras/golog/tree/master/_examples
-
 */
-package golog // import "github.com/kataras/golog"
+package golog
 
 // Version is the version string representation of the "golog" package.
-const Version = "0.0.8"
+const Version = "0.1.7"

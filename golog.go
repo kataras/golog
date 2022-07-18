@@ -49,8 +49,44 @@ func SetPrefix(s string) *Logger {
 
 // SetTimeFormat sets time format for logs,
 // if "s" is empty then time representation will be off.
-func SetTimeFormat(s string) {
-	Default.SetTimeFormat(s)
+func SetTimeFormat(s string) *Logger {
+	return Default.SetTimeFormat(s)
+}
+
+// SetStacktraceLimit sets a stacktrace entries limit
+// on `Debug` level.
+// Zero means all number of stack entries will be logged.
+// Negative value disables the stacktrace field.
+func SetStacktraceLimit(limit int) *Logger {
+	return Default.SetStacktraceLimit(limit)
+}
+
+// RegisterFormatter registers a Formatter for this logger.
+func RegisterFormatter(f Formatter) *Logger {
+	return Default.RegisterFormatter(f)
+}
+
+// SetFormat sets a default formatter for all log levels.
+func SetFormat(formatter string, opts ...interface{}) *Logger {
+	return Default.SetFormat(formatter, opts...)
+}
+
+// SetLevelFormat changes the output format for the given "levelName".
+func SetLevelFormat(levelName string, formatter string, opts ...interface{}) *Logger {
+	return Default.SetLevelFormat(levelName, formatter, opts...)
+}
+
+// SetLevelOutput sets a destination log output for the specific "levelName".
+// For multiple writers use the `io.Multiwriter` wrapper.
+func SetLevelOutput(levelName string, w io.Writer) *Logger {
+	return Default.SetLevelOutput(levelName, w)
+}
+
+// GetLevelOutput returns the responsible writer for the given "levelName".
+// If not a registered writer is set for that level then it returns
+// the logger's default printer. It does NOT return nil.
+func GetLevelOutput(levelName string) io.Writer {
+	return Default.GetLevelOutput(levelName)
 }
 
 // SetLevel accepts a string representation of
@@ -203,9 +239,26 @@ func Scan(r io.Reader) (cancel func()) {
 }
 
 // Child (creates if not exists and) returns a new child
-// Logger based on the default package-level logger instance.
+// Logger based on the current logger's fields.
 //
 // Can be used to separate logs by category.
-func Child(name string) *Logger {
-	return Default.Child(name)
+// If the "key" is string then it's used as prefix,
+// which is appended to the current prefix one.
+func Child(key interface{}) *Logger {
+	return Default.Child(key)
+}
+
+// SetChildPrefix same as `SetPrefix` but it does NOT
+// override the existing, instead the given "s"
+// is appended to the current one. It's useful
+// to chian loggers with their own names/prefixes.
+// It does add the ": " in the end of "s" if it's missing.
+// It returns itself.
+func SetChildPrefix(s string) *Logger {
+	return Default.SetChildPrefix(s)
+}
+
+// LastChild returns the last registered child Logger.
+func LastChild() *Logger {
+	return Default.LastChild()
 }

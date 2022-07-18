@@ -1,3 +1,59 @@
+## Wed 09 Decemember | v0.1.6
+
+Fix `Clone` not inherite the parent's formatters field (fixes `SetLevelFormat` on childs).
+
+## Mo 07 September | v0.1.5
+
+Introduce the [Formatter](https://github.com/kataras/golog/blob/master/formatter.go) interface. [Example](https://github.com/kataras/golog/tree/master/_examples/customize-output).
+
+- Add `Logger.RegisterFormatter(Formatter)` to register a custom `Formatter`.
+- Add `Logger.SetFormat(formatter string, opts ...interface{})` to set the default formatter for all log levels.
+- Add `Logger.SetLevelFormat(levelName string, formatter string, opts ...interface{})` to change the output format for the given "levelName".
+
+## Su 06 September | v0.1.3 and v0.1.4
+
+- Add `Logger.SetLevelOutput(levelName string, w io.Writer)` to customize the writer per level.
+- Add `Logger.GetLevelOutput(levelName string) io.Writer` to get the leveled output or the default one.
+
+## Sa 15 August | v0.1.2
+
+- `Logger.Child` accepts an `interface{}` instead of `string`. This way you can register children for pointers without forcing to naming them. If the key is string or completes the `fmt.Stringer` interface, then it's used as prefix (like always did).
+
+## Fr 14 August 2020 | v0.0.19
+
+- Use locks on hijacker.
+
+## Tu 09 June 2020 | v0.0.18
+
+- New `SetStacktraceLimit` method. If 0 (default) all debug stacktrace will be logged, if negative the field is disabled.
+- If `TimeFormat` field is empty then `timestamp` field is disabled. 
+
+## Sa 06 June 2020 | v0.0.16
+
+- New `Fields` type that can be passed to `Logf/Debugf/Infof/Warnf/Errorf/Fatalf` functions and set the `Log.Fields` data field (which can be retrieved through a custom `LogHandler`).
+- Add `Log.Stacktrace` of new `Frame` type which holds the callers stack trace when `Debug/Debugf`.
+- Add `json` struct fields to the `Log` structure.
+- Update the [customize-output](_examples/customize-output) example.
+
+## Su 17 May 2020 | v0.0.14
+
+Add a `Warningf` method to complete the [dgraph-io/badger.Logger](https://github.com/dgraph-io/badger/blob/ef28ef36b5923f12ffe3a1702bdfa6b479db6637/logger.go#L27) interface **and set the `Prefix` text right before the log's actual message instead of the beginning of the log line.**
+
+## Tu 28 April 2020 | v0.0.12
+
+This release provides support for colorized log level per registered output. Log's level will be colorful for registered `io.Writer`(via `AddOutput`) that supports colors, even when the rest of the writers (e.g. files) don't.
+
+**Breaking changes on the `Levels` map**. See the corresponding updated example for migration.
+
+## Th 12 December 2019 | v0.0.10
+
+- Update [pio dependency](https://github.com/kataras/pio) to version 0.0.2 as it contains a small but important bugfix for GUI apps.
+
+## We 16 October 2019 | v0.0.9
+
+- Set the Logger's `NewLine` on `Clone` method which `golog` makes use inside its `Child("...")` method.
+- Go module (v0.0.9). 
+
 ## We 02 August 2017 | v0.0.8
 
 Add `fatal` level and `Fatal/Fatalf` funcs.
