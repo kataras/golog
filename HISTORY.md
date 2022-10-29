@@ -1,3 +1,7 @@
+## Sat 29 October 2022 | v0.1.8
+
+Add `golog.Now` variable so 3rd-parties can customize the time.Now functionality used in golog.Log.Time and Timestamp.
+
 ## Wed 09 Decemember | v0.1.6
 
 Fix `Clone` not inherite the parent's formatters field (fixes `SetLevelFormat` on childs).

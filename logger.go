@@ -6,7 +6,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/kataras/pio"
 )
@@ -90,7 +89,7 @@ func (l *Logger) acquireLog(level Level, msg string, withPrintln bool, fields Fi
 
 	log.NewLine = withPrintln
 	if l.TimeFormat != "" {
-		log.Time = time.Now()
+		log.Time = Now()
 		log.Timestamp = log.Time.Unix()
 	}
 	log.Level = level
@@ -142,7 +141,7 @@ var logHijacker = func(ctx *pio.Ctx) {
 	}
 
 	if prefix := logger.Prefix; len(prefix) > 0 {
-		fmt.Fprintf(w, prefix)
+		fmt.Fprint(w, prefix)
 	}
 
 	fmt.Fprint(w, l.Message)
@@ -500,6 +499,7 @@ func (l *Logger) Install(logger ExternalLogger) {
 // it can be used only once per `golog#Logger` instance.
 //
 // Example Code:
+//
 //	import "log"
 //	myLogger := log.New(os.Stdout, "", 0)
 //	InstallStd(myLogger)
@@ -568,7 +568,7 @@ func (l *Logger) Scan(r io.Reader) (cancel func()) {
 			}
 
 			if l.TimeFormat != "" {
-				formattedTime := time.Now().Format(l.TimeFormat)
+				formattedTime := Now().Format(l.TimeFormat)
 				line = append([]byte(formattedTime+" "), line...)
 			}
 

@@ -1,6 +1,6 @@
 module github.com/kataras/golog
 
-go 1.18
+go 1.19
 
 require github.com/kataras/pio v0.0.11
 

@@ -2,9 +2,15 @@ package golog
 
 import (
 	"io"
+	"time"
 
 	"github.com/kataras/pio"
 )
+
+// Now is called to set the log's timestamp value.
+// It can be altered through initialization of the program
+// to customize the behavior of getting the current time.
+var Now func() time.Time = time.Now
 
 // NewLine can override the default package-level line breaker, "\n".
 // It should be called (in-sync) before  the print or leveled functions.
@@ -199,6 +205,7 @@ func Install(logger ExternalLogger) {
 // it can be used only once per `golog#Logger` instance.
 //
 // Example Code:
+//
 //	import "log"
 //	myLogger := log.New(os.Stdout, "", 0)
 //	InstallStd(myLogger)
