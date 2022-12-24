@@ -4,7 +4,7 @@ _golog_ is a zero-dependency simple, fast and easy-to-use level-based logger wri
 
 ![Output from win terminal](screen.png)
 
-[![build status](https://img.shields.io/github/workflow/status/kataras/golog/CI/master)](https://github.com/kataras/golog/actions) [![report card](https://img.shields.io/badge/report%20card-a%2B-ff3333.svg?style=flat-square)](http://goreportcard.com/report/kataras/golog) [![godocs](https://img.shields.io/badge/online-documentation-0366d6.svg?style=flat-square)](https://pkg.go.dev/github.com/kataras/golog) [![github issues](https://img.shields.io/github/issues/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues?q=is%3Aopen+is%3Aissue)
+[![build status](https://img.shields.io/github/actions/workflow/status/kataras/golog/ci.yml)](https://github.com/kataras/golog/actions) [![report card](https://img.shields.io/badge/report%20card-a%2B-ff3333.svg?style=flat-square)](http://goreportcard.com/report/kataras/golog) [![godocs](https://img.shields.io/badge/online-documentation-0366d6.svg?style=flat-square)](https://pkg.go.dev/github.com/kataras/golog) [![github issues](https://img.shields.io/github/issues/kataras/golog.svg?style=flat-square)](https://github.com/kataras/golog/issues?q=is%3Aopen+is%3Aissue)
 
 <!-- ## 🥇 Features
 
