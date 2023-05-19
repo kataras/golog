@@ -121,7 +121,7 @@ var logHijacker = func(ctx *pio.Ctx) {
 	defer logger.mu.Unlock()
 
 	w := logger.getOutput(l.Level)
-	if f := logger.getFormatter(); f != nil {
+	if f := logger.getFormatter(l.Level); f != nil {
 		if f.Format(w, l) {
 			ctx.Store(nil, pio.ErrHandled)
 			return
@@ -262,7 +262,7 @@ func (l *Logger) SetLevelFormat(levelName string, formatter string, opts ...inte
 	return l
 }
 
-func (l *Logger) getFormatter() Formatter {
+func (l *Logger) getFormatter(level Level) Formatter {
 	f, ok := l.LevelFormatter[l.Level]
 	if !ok {
 		f = l.formatter
