@@ -263,7 +263,7 @@ func (l *Logger) SetLevelFormat(levelName string, formatter string, opts ...inte
 }
 
 func (l *Logger) getFormatter(level Level) Formatter {
-	f, ok := l.LevelFormatter[l.Level]
+	f, ok := l.LevelFormatter[level]
 	if !ok {
 		f = l.formatter
 	}
