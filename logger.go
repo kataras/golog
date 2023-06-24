@@ -146,6 +146,10 @@ var logHijacker = func(ctx *pio.Ctx) {
 
 	fmt.Fprint(w, l.Message)
 
+	for k, v := range l.Fields {
+		fmt.Fprintf(w, " %s=%v", k, v)
+	}
+
 	if logger.NewLine {
 		fmt.Fprintln(w)
 	}
