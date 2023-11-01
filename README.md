@@ -37,10 +37,10 @@ Or edit your project's go.mod file and execute $ go build.
 ```mod
 module your_project_name
 
-go 1.19
+go 1.21
 
 require (
-    github.com/kataras/golog v0.1.8
+    github.com/kataras/golog v0.1.11
 )
 ```
 
@@ -79,6 +79,9 @@ func main() {
     golog.Debug("This is a debug message")
     golog.Fatal(`Fatal will exit no matter what,
     but it will also print the log message if logger's Level is >=FatalLevel`)
+
+    // Use any other supported logger through golog, e.g. the new "log/slog":
+    // golog.Install(slog.Default())
 }
 ```
 
@@ -154,11 +157,43 @@ db, err := badger.Open(opts)
 
 ### Level-based and standard Loggers
 
-You can put `golog` in front of your existing loggers using the [Install](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Logger.Install) and [InstallStd](https://pkg.go.dev/github.com/kataras/golog?tab=doc#InstallStd) methods.
+You can put `golog` in front of your existing loggers using the [Install](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Logger.Install) method.
 
-Any level-based Logger that implements the [ExternalLogger](https://pkg.go.dev/github.com/kataras/golog?tab=doc#ExternalLogger) can be adapted.
+Supporte loggers:
 
-E.g. [sirupsen/logrus](https://github.com/sirupsen/logrus):
+- log
+- slog
+- logrus
+
+Example for `log/slog` standard package:
+
+```go
+// Simulate an slog.Logger preparation.
+var myLogger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+    Level: slog.LevelDebug,
+}))
+
+func main() {
+    golog.SetLevel("error")
+    golog.Install(myLogger)
+
+    golog.Error("error message")
+}
+```
+
+Example for `log` standard package:
+
+```go
+// Simulate a log.Logger preparation.
+myLogger := log.New(os.Stdout, "", 0)
+
+golog.SetLevel("error")
+golog.Install(myLogger)
+
+golog.Error("error message")
+```
+
+Example for [sirupsen/logrus](https://github.com/sirupsen/logrus):
 
 ```go
 // Simulate a logrus logger preparation.
@@ -171,20 +206,6 @@ golog.Debug(`this debug message will not be shown,
     because the logrus level is InfoLevel`)
 golog.Error(`this error message will be visible as JSON,
     because of logrus.JSONFormatter`)
-```
-
-Any standard logger (without level capabilities) that implements the [StdLogger](https://pkg.go.dev/github.com/kataras/golog?tab=doc#StdLogger) can be adapted using the [InstallStd](https://pkg.go.dev/github.com/kataras/golog?tab=doc#InstallStd) method.
-
-E.g. `log` standard package:
-
-```go
-// Simulate a log.Logger preparation.
-myLogger := log.New(os.Stdout, "", 0)
-
-golog.SetLevel("error")
-golog.InstallStd(myLogger)
-
-golog.Error("error message")
 ```
 
 ## Output Format

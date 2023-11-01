@@ -1,3 +1,17 @@
+## Wed 11 November 2023 | v0.1.11
+
+- Add integration for `"log/slog"` package:
+
+```go
+import "log/slog"
+
+// [...]
+myLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+golog.Install(myLogger) // OR just  golog.Install(slog.Default())
+```
+
+- The `InstallStd` method was removed, use the `Install` method instead, it receives `any` instead of just `ExternalLogger` now.
+
 ## Sat 29 October 2022 | v0.1.8
 
 Add `golog.Now` variable so 3rd-parties can customize the time.Now functionality used in golog.Log.Time and Timestamp.

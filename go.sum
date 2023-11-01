@@ -1,4 +1,4 @@
-github.com/kataras/pio v0.0.12 h1:o52SfVYauS3J5X08fNjlGS5arXHjW/ItLkyLcKjoH6w=
-github.com/kataras/pio v0.0.12/go.mod h1:ODK/8XBhhQ5WqrAhKy+9lTPS7sBf6O3KcLhc9klfRcY=
-golang.org/x/sys v0.9.0 h1:KS/R3tvhPqvJvwcKfnBHJwwthS11LRhmM5D59eEXa0s=
-golang.org/x/sys v0.9.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+github.com/kataras/pio v0.0.13 h1:x0rXVX0fviDTXOOLOmr4MUxOabu1InVSTu5itF8CXCM=
+github.com/kataras/pio v0.0.13/go.mod h1:k3HNuSw+eJ8Pm2lA4lRhg3DiCjVgHlP8hmXApSej3oM=
+golang.org/x/sys v0.13.0 h1:Af8nKPmuFypiUBjVoU9V20FiaFXOcuZI21p0ycVYYGE=
+golang.org/x/sys v0.13.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=

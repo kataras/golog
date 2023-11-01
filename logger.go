@@ -489,28 +489,24 @@ func (l *Logger) Debugf(format string, args ...interface{}) {
 //
 // For example, if you want to print using a logrus
 // logger you can do the following:
-// `Install(logrus.StandardLogger())`
 //
-// Look `golog#Logger.Handle` for more.
-func (l *Logger) Install(logger ExternalLogger) {
-	l.Handle(integrateExternalLogger(logger))
-}
-
-// InstallStd receives  a standard logger
-// and automatically adapts its print functions.
+//	Install(logrus.StandardLogger())
 //
-// Install adds a golog handler to support third-party integrations,
-// it can be used only once per `golog#Logger` instance.
-//
-// Example Code:
+// Or the standard log's Logger:
 //
 //	import "log"
 //	myLogger := log.New(os.Stdout, "", 0)
-//	InstallStd(myLogger)
+//	Install(myLogger)
+//
+// Or even the slog/log's Logger:
+//
+//	import "log/slog"
+//	myLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+//	Install(myLogger) OR Install(slog.Default())
 //
 // Look `golog#Logger.Handle` for more.
-func (l *Logger) InstallStd(logger StdLogger) {
-	l.Handle(integrateStdLogger(logger))
+func (l *Logger) Install(logger any) {
+	l.Handle(integrade(logger))
 }
 
 // Handle adds a log handler.

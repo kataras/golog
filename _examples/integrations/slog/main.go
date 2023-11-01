@@ -1,14 +1,14 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/kataras/golog"
 )
 
-// simulate a log.Logger preparation:
-var myLogger = log.New(os.Stdout, "", 0)
+// simulate an slog.Logger preparation:
+var myLogger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 func main() {
 	golog.SetLevel("error")
