@@ -310,6 +310,7 @@ func main() {
 
 ## Examples
 
+
 * [basic](_examples/basic/main.go)
 * [output per level](_examples/level-output/main.go)
 * [child](_examples/child/main.go)
@@ -320,6 +321,8 @@ func main() {
 * [scan](_examples/scan/main.go)
 * [logurs integration](_examples/integrations/logrus/main.go)
 * [log.Logger std integration](_examples/integrations/std/main.go)
+* [ngrok integration](_examples/ngrok-logger/main.go) **NEW**
+* [postgres integration](https://github.com/kataras/pgx-golog) **NEW**
 * [new instance](_examples/instance/main.go)
 
 ## 🔥 Benchmarks
