@@ -40,7 +40,7 @@ module your_project_name
 go 1.22
 
 require (
-    github.com/kataras/golog v0.1.11
+    github.com/kataras/golog v0.1.12
 )
 ```
 
