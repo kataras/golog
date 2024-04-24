@@ -1,3 +1,7 @@
+## Wed 24 April 2024 | v0.1.12
+
+Accept `slog.Attr` among with `golog.Fields` for extra log data. 
+
 ## Wed 11 November 2023 | v0.1.11
 
 - Add integration for `"log/slog"` package:

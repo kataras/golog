@@ -38,7 +38,7 @@ Source code and other details for the project are available at GitHub:
 
 # Current Version
 
-0.1.11
+0.1.12
 
 # Installation
 
@@ -371,4 +371,4 @@ Examples:
 package golog
 
 // Version is the version string representation of the "golog" package.
-const Version = "0.1.11"
+const Version = "0.1.12"

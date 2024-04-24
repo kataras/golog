@@ -37,7 +37,7 @@ Or edit your project's go.mod file and execute $ go build.
 ```mod
 module your_project_name
 
-go 1.21
+go 1.22
 
 require (
     github.com/kataras/golog v0.1.11
