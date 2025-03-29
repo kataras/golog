@@ -1,6 +1,7 @@
 module github.com/kataras/golog/_examples/ngrok-logger
 
 go 1.22
+toolchain go1.23.7
 
 replace github.com/kataras/golog => ../../
 
@@ -19,10 +20,10 @@ require (
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.ngrok.com/muxado/v2 v2.0.0 // indirect
-	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
-	golang.org/x/term v0.19.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/term v0.29.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
