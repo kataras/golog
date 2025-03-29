@@ -60,12 +60,12 @@ func integradeSlog(logger *slog.Logger) Handler {
 //
 // See `Logger#Install` and `Logger#Handle` for more.
 type ExternalLogger interface {
-	Print(...interface{})
-	Println(...interface{})
-	Error(...interface{})
-	Warn(...interface{})
-	Info(...interface{})
-	Debug(...interface{})
+	Print(...any)
+	Println(...any)
+	Error(...any)
+	Warn(...any)
+	Info(...any)
+	Debug(...any)
 }
 
 // integrateExternalLogger is a Handler which
@@ -98,7 +98,7 @@ func getSlogLevel(level Level) slog.Level {
 	return slog.LevelDebug
 }
 
-func getExternalPrintFunc(logger ExternalLogger, log *Log) func(...interface{}) {
+func getExternalPrintFunc(logger ExternalLogger, log *Log) func(...any) {
 	switch log.Level {
 	case ErrorLevel:
 		return logger.Error
@@ -126,9 +126,9 @@ func getExternalPrintFunc(logger ExternalLogger, log *Log) func(...interface{}) 
 //
 // See `Logger#Install` and `Logger#Handle` for more.
 type StdLogger interface {
-	Printf(format string, v ...interface{})
-	Print(v ...interface{})
-	Println(v ...interface{})
+	Printf(format string, v ...any)
+	Print(v ...any)
+	Println(v ...any)
 }
 
 func integrateStdLogger(logger StdLogger) Handler {
@@ -139,7 +139,7 @@ func integrateStdLogger(logger StdLogger) Handler {
 	}
 }
 
-func getStdPrintFunc(logger StdLogger, log *Log) func(...interface{}) {
+func getStdPrintFunc(logger StdLogger, log *Log) func(...any) {
 	// no levels here
 
 	// passed with Println

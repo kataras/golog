@@ -18,10 +18,10 @@ type ngrokLoggerAdapter struct {
 	logger *golog.Logger
 }
 
-// Log(context context.Context, level LogLevel, msg string, data map[string]interface{})
+// Log(context context.Context, level LogLevel, msg string, data map[string]any)
 
 // Log implements the ngrok.Logger interface.
-func (l *ngrokLoggerAdapter) Log(context context.Context, level log.LogLevel, msg string, data map[string]interface{}) {
+func (l *ngrokLoggerAdapter) Log(context context.Context, level log.LogLevel, msg string, data map[string]any) {
 	l.logger.Info(msg, golog.Fields(data))
 }
 

@@ -1,7 +1,7 @@
 module github.com/kataras/golog
 
-go 1.22
+go 1.24
 
-require github.com/kataras/pio v0.0.13
+require github.com/kataras/pio v0.0.14
 
-require golang.org/x/sys v0.13.0 // indirect
+require golang.org/x/sys v0.31.0 // indirect

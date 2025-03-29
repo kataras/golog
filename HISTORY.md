@@ -29,8 +29,8 @@ Fix `Clone` not inherite the parent's formatters field (fixes `SetLevelFormat` o
 Introduce the [Formatter](https://github.com/kataras/golog/blob/master/formatter.go) interface. [Example](https://github.com/kataras/golog/tree/master/_examples/customize-output).
 
 - Add `Logger.RegisterFormatter(Formatter)` to register a custom `Formatter`.
-- Add `Logger.SetFormat(formatter string, opts ...interface{})` to set the default formatter for all log levels.
-- Add `Logger.SetLevelFormat(levelName string, formatter string, opts ...interface{})` to change the output format for the given "levelName".
+- Add `Logger.SetFormat(formatter string, opts ...any)` to set the default formatter for all log levels.
+- Add `Logger.SetLevelFormat(levelName string, formatter string, opts ...any)` to change the output format for the given "levelName".
 
 ## Su 06 September | v0.1.3 and v0.1.4
 
@@ -39,7 +39,7 @@ Introduce the [Formatter](https://github.com/kataras/golog/blob/master/formatter
 
 ## Sa 15 August | v0.1.2
 
-- `Logger.Child` accepts an `interface{}` instead of `string`. This way you can register children for pointers without forcing to naming them. If the key is string or completes the `fmt.Stringer` interface, then it's used as prefix (like always did).
+- `Logger.Child` accepts an `any` instead of `string`. This way you can register children for pointers without forcing to naming them. If the key is string or completes the `fmt.Stringer` interface, then it's used as prefix (like always did).
 
 ## Fr 14 August 2020 | v0.0.19
 

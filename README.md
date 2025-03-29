@@ -263,7 +263,7 @@ type Formatter interface {
 	String() string
 	// Set any options and return a clone,
 	// generic. See `Logger.SetFormat`.
-	Options(opts ...interface{}) Formatter
+	Options(opts ...any) Formatter
 	// Writes the "log" to "dest" logger.
 	Format(dest io.Writer, log *Log) bool
 }

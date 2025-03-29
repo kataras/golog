@@ -77,7 +77,7 @@ func New() *Logger {
 // One or more values of `Fields` type can be passed
 // on all Log methods except `Print/Printf/Println` to set the `Log.Fields` field,
 // which can be accessed through a custom LogHandler.
-type Fields map[string]interface{}
+type Fields map[string]any
 
 // acquireLog returns a new log fom the pool.
 func (l *Logger) acquireLog(level Level, msg string, withPrintln bool, fields Fields) *Log {
@@ -132,27 +132,27 @@ var logHijacker = func(ctx *pio.Ctx) {
 	if l.Level != DisableLevel {
 		if level, ok := Levels[l.Level]; ok {
 			pio.WriteRich(w, level.Title, level.ColorCode, level.Style...)
-			w.Write(spaceBytes)
+			_, _ = w.Write(spaceBytes)
 		}
 	}
 
 	if t := l.FormatTime(); t != "" {
-		fmt.Fprint(w, t)
-		w.Write(spaceBytes)
+		_, _ = fmt.Fprint(w, t)
+		_, _ = w.Write(spaceBytes)
 	}
 
 	if prefix := logger.Prefix; len(prefix) > 0 {
-		fmt.Fprint(w, prefix)
+		_, _ = fmt.Fprint(w, prefix)
 	}
 
-	fmt.Fprint(w, l.Message)
+	_, _ = fmt.Fprint(w, l.Message)
 
 	for k, v := range l.Fields {
-		fmt.Fprintf(w, " %s=%v", k, v)
+		_, _ = fmt.Fprintf(w, " %s=%v", k, v)
 	}
 
 	if logger.NewLine {
-		fmt.Fprintln(w)
+		_, _ = fmt.Fprintln(w)
 	}
 
 	ctx.Store(nil, pio.ErrHandled)
@@ -238,7 +238,7 @@ func (l *Logger) RegisterFormatter(f Formatter) *Logger {
 }
 
 // SetFormat sets a formatter for all logger's logs.
-func (l *Logger) SetFormat(formatter string, opts ...interface{}) *Logger {
+func (l *Logger) SetFormat(formatter string, opts ...any) *Logger {
 	l.mu.RLock()
 	f, ok := l.formatters[formatter]
 	l.mu.RUnlock()
@@ -253,7 +253,7 @@ func (l *Logger) SetFormat(formatter string, opts ...interface{}) *Logger {
 }
 
 // SetLevelFormat changes the output format for the given "levelName".
-func (l *Logger) SetLevelFormat(levelName string, formatter string, opts ...interface{}) *Logger {
+func (l *Logger) SetLevelFormat(levelName string, formatter string, opts ...any) *Logger {
 	l.mu.RLock()
 	f, ok := l.formatters[formatter]
 	l.mu.RUnlock()
@@ -342,9 +342,9 @@ func (l *Logger) print(level Level, msg string, newLine bool, fields Fields) {
 		// then print it as usual.
 		if !l.handled(log) {
 			if newLine {
-				l.Printer.Println(log)
+				_, _ = l.Printer.Println(log)
 			} else {
-				l.Printer.Print(log)
+				_, _ = l.Printer.Print(log)
 			}
 		}
 
@@ -357,18 +357,18 @@ func (l *Logger) print(level Level, msg string, newLine bool, fields Fields) {
 }
 
 // Print prints a log message without levels and colors.
-func (l *Logger) Print(v ...interface{}) {
+func (l *Logger) Print(v ...any) {
 	l.print(DisableLevel, fmt.Sprint(v...), l.NewLine, nil)
 }
 
 // Printf formats according to a format specifier and writes to `Printer#Output` without levels and colors.
-func (l *Logger) Printf(format string, args ...interface{}) {
+func (l *Logger) Printf(format string, args ...any) {
 	l.print(DisableLevel, fmt.Sprintf(format, args...), l.NewLine, nil)
 }
 
 // Println prints a log message without levels and colors.
 // It adds a new line at the end, it overrides the `NewLine` option.
-func (l *Logger) Println(v ...interface{}) {
+func (l *Logger) Println(v ...any) {
 	l.print(DisableLevel, fmt.Sprint(v...), true, nil)
 }
 
@@ -376,7 +376,7 @@ func (l *Logger) Println(v ...interface{}) {
 // It returns the arguments and the fields.
 // It's used to separate the arguments from the fields
 // when a `Fields` or `[]slog.Attr` is passed as a value.
-func splitArgsFields(values []interface{}) ([]interface{}, Fields) {
+func splitArgsFields(values []any) ([]any, Fields) {
 	var (
 		args   = values[:0]
 		fields Fields
@@ -417,7 +417,7 @@ func splitArgsFields(values []interface{}) ([]interface{}, Fields) {
 // Log prints a leveled log message to the output.
 // This method can be used to use custom log levels if needed.
 // It adds a new line in the end.
-func (l *Logger) Log(level Level, v ...interface{}) {
+func (l *Logger) Log(level Level, v ...any) {
 	if l.Level >= level {
 		args, fields := splitArgsFields(v)
 		l.print(level, fmt.Sprint(args...), l.NewLine, fields)
@@ -427,7 +427,7 @@ func (l *Logger) Log(level Level, v ...interface{}) {
 // Logf prints a leveled log message to the output.
 // This method can be used to use custom log levels if needed.
 // It adds a new line in the end.
-func (l *Logger) Logf(level Level, format string, args ...interface{}) {
+func (l *Logger) Logf(level Level, format string, args ...any) {
 	if l.Level >= level {
 		arguments, fields := splitArgsFields(args)
 		msg := format
@@ -441,61 +441,61 @@ func (l *Logger) Logf(level Level, format string, args ...interface{}) {
 // Fatal `os.Exit(1)` exit no matter the level of the logger.
 // If the logger's level is fatal, error, warn, info or debug
 // then it will print the log message too.
-func (l *Logger) Fatal(v ...interface{}) {
+func (l *Logger) Fatal(v ...any) {
 	l.Log(FatalLevel, v...)
 }
 
 // Fatalf will `os.Exit(1)` no matter the level of the logger.
 // If the logger's level is fatal, error, warn, info or debug
 // then it will print the log message too.
-func (l *Logger) Fatalf(format string, args ...interface{}) {
+func (l *Logger) Fatalf(format string, args ...any) {
 	l.Logf(FatalLevel, format, args...)
 }
 
 // Error will print only when logger's Level is error, warn, info or debug.
-func (l *Logger) Error(v ...interface{}) {
+func (l *Logger) Error(v ...any) {
 	l.Log(ErrorLevel, v...)
 }
 
 // Errorf will print only when logger's Level is error, warn, info or debug.
-func (l *Logger) Errorf(format string, args ...interface{}) {
+func (l *Logger) Errorf(format string, args ...any) {
 	l.Logf(ErrorLevel, format, args...)
 }
 
 // Warn will print when logger's Level is warn, info or debug.
-func (l *Logger) Warn(v ...interface{}) {
+func (l *Logger) Warn(v ...any) {
 	l.Log(WarnLevel, v...)
 }
 
 // Warnf will print when logger's Level is warn, info or debug.
-func (l *Logger) Warnf(format string, args ...interface{}) {
+func (l *Logger) Warnf(format string, args ...any) {
 	l.Logf(WarnLevel, format, args...)
 }
 
 // Warningf exactly the same as `Warnf`.
 // It's here for badger integration:
 // https://github.com/dgraph-io/badger/blob/ef28ef36b5923f12ffe3a1702bdfa6b479db6637/logger.go#L25
-func (l *Logger) Warningf(format string, args ...interface{}) {
+func (l *Logger) Warningf(format string, args ...any) {
 	l.Warnf(format, args...)
 }
 
 // Info will print when logger's Level is info or debug.
-func (l *Logger) Info(v ...interface{}) {
+func (l *Logger) Info(v ...any) {
 	l.Log(InfoLevel, v...)
 }
 
 // Infof will print when logger's Level is info or debug.
-func (l *Logger) Infof(format string, args ...interface{}) {
+func (l *Logger) Infof(format string, args ...any) {
 	l.Logf(InfoLevel, format, args...)
 }
 
 // Debug will print when logger's Level is debug.
-func (l *Logger) Debug(v ...interface{}) {
+func (l *Logger) Debug(v ...any) {
 	l.Log(DebugLevel, v...)
 }
 
 // Debugf will print when logger's Level is debug.
-func (l *Logger) Debugf(format string, args ...interface{}) {
+func (l *Logger) Debugf(format string, args ...any) {
 	l.Logf(DebugLevel, format, args...)
 }
 
@@ -573,7 +573,7 @@ func (l *Logger) Scan(r io.Reader) (cancel func()) {
 		// logging levels (because of the io.Reader)
 		// Note: We don't use the `pio.Text` built'n marshaler
 		// because we want to manage time log too.
-		l.Printer.MarshalFunc(func(v interface{}) ([]byte, error) {
+		l.Printer.MarshalFunc(func(v any) ([]byte, error) {
 			var line []byte
 			if b, ok := v.([]byte); ok {
 				line = b
@@ -637,7 +637,7 @@ func (l *Logger) Clone() *Logger {
 // Can be used to separate logs by category.
 // If the "key" is string then it's used as prefix,
 // which is appended to the current prefix one.
-func (l *Logger) Child(key interface{}) *Logger {
+func (l *Logger) Child(key any) *Logger {
 	return l.children.getOrAdd(key, l)
 }
 
@@ -676,14 +676,14 @@ func (l *Logger) LastChild() *Logger {
 
 type loggerMap struct {
 	mu           sync.RWMutex
-	Items        map[interface{}]*Logger
-	itemsOrdered map[int]interface{} // registration order of logger and its key.
+	Items        map[any]*Logger
+	itemsOrdered map[int]any // registration order of logger and its key.
 }
 
 func newLoggerMap() *loggerMap {
 	return &loggerMap{
-		Items:        make(map[interface{}]*Logger),
-		itemsOrdered: make(map[int]interface{}),
+		Items:        make(map[any]*Logger),
+		itemsOrdered: make(map[int]any),
 	}
 }
 
@@ -708,7 +708,7 @@ func (m *loggerMap) getLast() *Logger {
 	return m.getByIndex(n - 1)
 }
 
-func (m *loggerMap) getOrAdd(key interface{}, parent *Logger) *Logger {
+func (m *loggerMap) getOrAdd(key any, parent *Logger) *Logger {
 	m.mu.RLock()
 	logger, ok := m.Items[key]
 	m.mu.RUnlock()

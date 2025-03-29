@@ -12,7 +12,7 @@ type Formatter interface {
 	String() string
 	// Set any options and return a clone,
 	// generic. See `Logger.SetFormat`.
-	Options(opts ...interface{}) Formatter
+	Options(opts ...any) Formatter
 	// Writes the "log" to "dest" logger.
 	Format(dest io.Writer, log *Log) bool
 }
@@ -38,7 +38,7 @@ func (f *JSONFormatter) String() string {
 }
 
 // Options sets the options for the JSON Formatter (currently only indent).
-func (f *JSONFormatter) Options(opts ...interface{}) Formatter {
+func (f *JSONFormatter) Options(opts ...any) Formatter {
 	formatter := &JSONFormatter{
 		Indent:   "  ",
 		encoders: make(map[Level]*json.Encoder, len(Levels)),
