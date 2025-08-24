@@ -5,10 +5,10 @@ import (
 	"log/slog"
 )
 
-func integrade(logger any) Handler {
+func integrate(logger any) Handler {
 	switch v := logger.(type) {
 	case *slog.Logger:
-		return integradeSlog(v)
+		return integrateSlog(v)
 	case ExternalLogger:
 		return integrateExternalLogger(v)
 	case StdLogger:
@@ -34,7 +34,7 @@ func (*slog.Logger).WarnContext(ctx context.Context, msg string, args ...any)
 func (*slog.Logger).With(args ...any) *slog.Logger
 func (*slog.Logger).WithGroup(name string) *slog.Logger
 */
-func integradeSlog(logger *slog.Logger) Handler {
+func integrateSlog(logger *slog.Logger) Handler {
 	return func(log *Log) bool {
 		// golog level to slog level.
 		level := getSlogLevel(log.Level)

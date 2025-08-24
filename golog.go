@@ -3,22 +3,12 @@ package golog
 import (
 	"io"
 	"time"
-
-	"github.com/kataras/pio"
 )
 
 // Now is called to set the log's timestamp value.
 // It can be altered through initialization of the program
 // to customize the behavior of getting the current time.
 var Now func() time.Time = time.Now
-
-// NewLine can override the default package-level line breaker, "\n".
-// It should be called (in-sync) before  the print or leveled functions.
-//
-// See `github.com/kataras/pio#NewLine` and `Logger#NewLine` too.
-func NewLine(newLineChar string) {
-	pio.NewLine = []byte(newLineChar)
-}
 
 // Default is the package-level ready-to-use logger,
 // level had set to "info", is changeable.
@@ -225,13 +215,6 @@ func Install(logger any) {
 // The `Log` value holds the level of the print operation as well.
 func Handle(handler Handler) {
 	Default.Handle(handler)
-}
-
-// Hijack adds a hijacker to the low-level logger's Printer.
-// If you need to implement such as a low-level hijacker manually,
-// then you have to make use of the pio library.
-func Hijack(hijacker func(ctx *pio.Ctx)) {
-	Default.Hijack(hijacker)
 }
 
 // Scan scans everything from "r" and prints

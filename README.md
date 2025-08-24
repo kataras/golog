@@ -37,10 +37,10 @@ Or edit your project's go.mod file and execute $ go build.
 ```mod
 module your_project_name
 
-go 1.22
+go 1.25
 
 require (
-    github.com/kataras/golog v0.1.12
+    github.com/kataras/golog v0.1.14
 )
 ```
 
@@ -321,7 +321,6 @@ func main() {
 * [scan](_examples/scan/main.go)
 * [logurs integration](_examples/integrations/logrus/main.go)
 * [log.Logger std integration](_examples/integrations/std/main.go)
-* [ngrok integration](_examples/ngrok-logger/main.go) **NEW**
 * [postgres integration](https://github.com/kataras/pgx-golog) **NEW**
 * [new instance](_examples/instance/main.go)
 

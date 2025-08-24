@@ -1,14 +1,16 @@
 package golog
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"log/slog"
+	"maps"
 	"os"
 	"strings"
 	"sync"
 
-	"github.com/kataras/pio"
+	"github.com/kataras/golog/internal"
 )
 
 // Handler is the signature type for logger's handler.
@@ -41,8 +43,8 @@ type Logger struct {
 	// if you want to customize the log message please read the examples
 	// or navigate to: https://github.com/kataras/golog/issues/3#issuecomment-355895870.
 	NewLine bool
-	mu      sync.RWMutex // for logger field changes and printing through pio hijacker.
-	Printer *pio.Printer
+	mu      sync.RWMutex // for logger field changes and printing.
+	Printer *internal.Printer
 	// The per log level raw writers, optionally.
 	LevelOutput map[Level]io.Writer
 
@@ -51,7 +53,6 @@ type Logger struct {
 	LevelFormatter map[Level]Formatter  // per level formatter.
 
 	handlers []Handler
-	once     sync.Once
 	logs     sync.Pool
 	children *loggerMap
 }
@@ -63,7 +64,7 @@ func New() *Logger {
 		Level:       InfoLevel,
 		TimeFormat:  "2006/01/02 15:04",
 		NewLine:     true,
-		Printer:     pio.NewPrinter("", os.Stdout).EnableDirectOutput().Hijack(logHijacker).SetSync(true),
+		Printer:     internal.NewPrinter(os.Stdout),
 		LevelOutput: make(map[Level]io.Writer),
 		formatters: map[string]Formatter{ // the available builtin formatters.
 			"json": new(JSONFormatter),
@@ -107,59 +108,50 @@ func (l *Logger) releaseLog(log *Log) {
 
 var spaceBytes = []byte(" ")
 
-// we could use marshal inside Log but we don't have access to printer,
-// we could also use the .Handle with NopOutput too but
-// this way is faster:
-var logHijacker = func(ctx *pio.Ctx) {
-	l, ok := ctx.Value.(*Log)
-	if !ok {
-		ctx.Next()
-		return
-	}
+// formatLog formats and writes the log entry directly to the output writer.
+func (l *Logger) formatLog(log *Log) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
-	logger := l.Logger
-	logger.mu.Lock()
-	defer logger.mu.Unlock()
+	w := l.getOutput(log.Level)
 
-	w := logger.getOutput(l.Level)
-	if f := logger.getFormatter(); f != nil {
-		if f.Format(w, l) {
-			ctx.Store(nil, pio.ErrHandled)
+	// Check if a custom formatter should handle this
+	if f := l.getFormatter(); f != nil {
+		if f.Format(w, log) {
 			return
 		}
 	}
 
-	if l.Level != DisableLevel {
-		if level, ok := Levels[l.Level]; ok {
-			pio.WriteRich(w, level.Title, level.ColorCode, level.Style...)
+	// Format the log entry directly
+	if log.Level != DisableLevel {
+		if level, ok := Levels[log.Level]; ok {
+			internal.WriteRich(w, level.Title, level.ColorCode, level.Style...)
 			_, _ = w.Write(spaceBytes)
 		}
 	}
 
-	if t := l.FormatTime(); t != "" {
+	if t := log.FormatTime(); t != "" {
 		_, _ = fmt.Fprint(w, t)
 		_, _ = w.Write(spaceBytes)
 	}
 
-	if prefix := logger.Prefix; len(prefix) > 0 {
+	if prefix := l.Prefix; len(prefix) > 0 {
 		_, _ = fmt.Fprint(w, prefix)
 	}
 
-	_, _ = fmt.Fprint(w, l.Message)
+	_, _ = fmt.Fprint(w, log.Message)
 
-	for k, v := range l.Fields {
+	for k, v := range log.Fields {
 		_, _ = fmt.Fprintf(w, " %s=%v", k, v)
 	}
 
-	if logger.NewLine {
+	if l.NewLine {
 		_, _ = fmt.Fprintln(w)
 	}
-
-	ctx.Store(nil, pio.ErrHandled)
 }
 
 // NopOutput disables the output.
-var NopOutput = pio.NopOutput()
+var NopOutput = internal.NopOutput()
 
 // SetOutput overrides the Logger's Printer's Output with another `io.Writer`.
 //
@@ -339,13 +331,9 @@ func (l *Logger) print(level Level, msg string, newLine bool, fields Fields) {
 			log.Stacktrace = GetStacktrace(l.StacktraceLimit)
 		}
 		// if not handled by one of the handler
-		// then print it as usual.
+		// then format and print it as usual.
 		if !l.handled(log) {
-			if newLine {
-				_, _ = l.Printer.Println(log)
-			} else {
-				_, _ = l.Printer.Print(log)
-			}
+			l.formatLog(log)
 		}
 
 		l.releaseLog(log)
@@ -524,7 +512,7 @@ func (l *Logger) Debugf(format string, args ...any) {
 //
 // Look `golog#Logger.Handle` for more.
 func (l *Logger) Install(logger any) {
-	l.Handle(integrade(logger))
+	l.Handle(integrate(logger))
 }
 
 // Handle adds a log handler.
@@ -554,47 +542,64 @@ func (l *Logger) handled(value *Log) (handled bool) {
 	return false
 }
 
-// Hijack adds a hijacker to the low-level logger's Printer.
-// If you need to implement such as a low-level hijacker manually,
-// then you have to make use of the pio library.
-func (l *Logger) Hijack(hijacker func(ctx *pio.Ctx)) {
-	l.Printer.Hijack(hijacker)
-}
-
 // Scan scans everything from "r" and prints
 // its new contents to the logger's Printer's Output,
 // forever or until the returning "cancel" is fired, once.
 func (l *Logger) Scan(r io.Reader) (cancel func()) {
-	l.once.Do(func() {
-		// add a marshaler once
-		// in order to handle []byte and string
-		// as its input.
-		// Because scan doesn't care about
-		// logging levels (because of the io.Reader)
-		// Note: We don't use the `pio.Text` built'n marshaler
-		// because we want to manage time log too.
-		l.Printer.MarshalFunc(func(v any) ([]byte, error) {
-			var line []byte
-			if b, ok := v.([]byte); ok {
-				line = b
-			} else if s, ok := v.(string); ok {
-				line = []byte(s)
+	// Create a custom scanner that adds time formatting
+	scanner := &timeScanner{
+		logger: l,
+		reader: r,
+	}
+	return scanner.scan()
+}
+
+// timeScanner handles scanning with time formatting
+type timeScanner struct {
+	logger *Logger
+	reader io.Reader
+}
+
+func (ts *timeScanner) scan() (cancel func()) {
+	stop := make(chan struct{})
+
+	go func() {
+		defer close(stop)
+
+		// Use bufio.Scanner to read lines
+		scanner := bufio.NewScanner(ts.reader)
+		for scanner.Scan() {
+			select {
+			case <-stop:
+				return
+			default:
+				line := scanner.Bytes()
+				if len(line) > 0 {
+					// Add time prefix if TimeFormat is set
+					var formattedLine []byte
+					if ts.logger.TimeFormat != "" {
+						timePrefix := Now().Format(ts.logger.TimeFormat) + " "
+						formattedLine = append([]byte(timePrefix), line...)
+					} else {
+						formattedLine = make([]byte, len(line))
+						copy(formattedLine, line)
+					}
+
+					// Write the formatted line with newline
+					data := append(formattedLine, '\n')
+					ts.logger.Printer.Write(data)
+				}
 			}
+		}
+	}()
 
-			if len(line) == 0 {
-				return nil, pio.ErrMarshalNotResponsible
-			}
-
-			if l.TimeFormat != "" {
-				formattedTime := Now().Format(l.TimeFormat)
-				line = append([]byte(formattedTime+" "), line...)
-			}
-
-			return line, nil
-		})
-	})
-
-	return l.Printer.Scan(r, true)
+	return func() {
+		select {
+		case <-stop:
+		default:
+			close(stop)
+		}
+	}
 }
 
 // Clone returns a copy of this "l" Logger.
@@ -602,17 +607,13 @@ func (l *Logger) Scan(r io.Reader) (cancel func()) {
 func (l *Logger) Clone() *Logger {
 	// copy level output and format maps.
 	formats := make(map[string]Formatter, len(l.formatters))
-	for k, v := range l.formatters {
-		formats[k] = v
-	}
+	maps.Copy(formats, l.formatters)
+
 	levelFormat := make(map[Level]Formatter, len(l.LevelFormatter))
-	for k, v := range l.LevelFormatter {
-		levelFormat[k] = v
-	}
+	maps.Copy(levelFormat, l.LevelFormatter)
+
 	levelOutput := make(map[Level]io.Writer, len(l.LevelOutput))
-	for k, v := range l.LevelOutput {
-		levelOutput[k] = v
-	}
+	maps.Copy(levelOutput, l.LevelOutput)
 
 	return &Logger{
 		Prefix:         l.Prefix,
@@ -627,7 +628,6 @@ func (l *Logger) Clone() *Logger {
 		handlers:       l.handlers,
 		children:       newLoggerMap(),
 		mu:             sync.RWMutex{},
-		once:           sync.Once{},
 	}
 }
 
@@ -672,6 +672,27 @@ func (l *Logger) SetChildPrefix(prefix string) *Logger {
 // LastChild returns the last registered child Logger.
 func (l *Logger) LastChild() *Logger {
 	return l.children.getLast()
+}
+
+// RemoveChild removes a child logger by its key.
+// Returns true if the child was found and removed, false otherwise.
+func (l *Logger) RemoveChild(key any) bool {
+	return l.children.remove(key)
+}
+
+// ClearChildren removes all child loggers.
+func (l *Logger) ClearChildren() {
+	l.children.clear()
+}
+
+// ChildCount returns the number of child loggers.
+func (l *Logger) ChildCount() int {
+	return l.children.count()
+}
+
+// ListChildKeys returns a slice of all child logger keys.
+func (l *Logger) ListChildKeys() []any {
+	return l.children.listKeys()
 }
 
 type loggerMap struct {
@@ -732,4 +753,60 @@ func (m *loggerMap) getOrAdd(key any, parent *Logger) *Logger {
 	m.mu.Unlock()
 
 	return logger
+}
+
+// remove removes a logger by its key and returns true if found and removed.
+func (m *loggerMap) remove(key any) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	_, exists := m.Items[key]
+	if !exists {
+		return false
+	}
+
+	delete(m.Items, key)
+
+	// Rebuild the ordered map
+	newOrdered := make(map[int]any)
+	index := 0
+	for _, v := range m.itemsOrdered {
+		if v != key {
+			newOrdered[index] = v
+			index++
+		}
+	}
+	m.itemsOrdered = newOrdered
+
+	return true
+}
+
+// clear removes all child loggers.
+func (m *loggerMap) clear() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.Items = make(map[any]*Logger)
+	m.itemsOrdered = make(map[int]any)
+}
+
+// count returns the number of child loggers.
+func (m *loggerMap) count() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return len(m.Items)
+}
+
+// listKeys returns a slice of all logger keys.
+func (m *loggerMap) listKeys() []any {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	keys := make([]any, 0, len(m.Items))
+	for key := range m.Items {
+		keys = append(keys, key)
+	}
+
+	return keys
 }

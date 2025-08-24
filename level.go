@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kataras/pio"
+	"github.com/kataras/golog/internal"
 )
 
 // Level is a number which defines the log level.
@@ -61,29 +61,29 @@ var Levels = map[Level]*LevelMetadata{
 	FatalLevel: {
 		Name:      "fatal",
 		Title:     "[FTAL]",
-		ColorCode: pio.Red,
-		Style:     []pio.RichOption{pio.Background},
+		ColorCode: internal.Red,
+		Style:     []internal.RichOption{internal.Background},
 	},
 	ErrorLevel: {
 		Name:      "error",
 		Title:     "[ERRO]",
-		ColorCode: pio.Red,
+		ColorCode: internal.Red,
 	},
 	WarnLevel: {
 		Name:             "warn",
 		AlternativeNames: []string{"warning"},
 		Title:            "[WARN]",
-		ColorCode:        pio.Magenta,
+		ColorCode:        internal.Magenta,
 	},
 	InfoLevel: {
 		Name:      "info",
 		Title:     "[INFO]",
-		ColorCode: pio.Cyan,
+		ColorCode: internal.Cyan,
 	},
 	DebugLevel: {
 		Name:      "debug",
 		Title:     "[DBUG]",
-		ColorCode: pio.Yellow,
+		ColorCode: internal.Yellow,
 	},
 }
 
@@ -128,7 +128,7 @@ type LevelMetadata struct {
 	// ColorCode a color for the `Title`.
 	ColorCode int
 	// Style one or more rich options for the `Title`.
-	Style []pio.RichOption
+	Style []internal.RichOption
 }
 
 // Text returns the text that should be
@@ -136,14 +136,14 @@ type LevelMetadata struct {
 // log level is being written.
 func (m *LevelMetadata) Text(enableColor bool) string {
 	if enableColor {
-		return pio.Rich(m.Title, m.ColorCode, m.Style...)
+		return internal.Rich(m.Title, m.ColorCode, m.Style...)
 	}
 	return m.Title
 }
 
 // SetText can modify the prefix that will be prepended
 // to the output message log when `Error/Errorf` functions are being used.
-func (m *LevelMetadata) SetText(title string, colorCode int, style ...pio.RichOption) {
+func (m *LevelMetadata) SetText(title string, colorCode int, style ...internal.RichOption) {
 	m.Title = title
 	m.ColorCode = colorCode
 	m.Style = style

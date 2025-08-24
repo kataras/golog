@@ -1,54 +1,64 @@
 package main
 
-import "github.com/kataras/golog"
+import (
+	"fmt"
+
+	"github.com/kataras/golog"
+)
 
 func main() {
+	// Create a main logger
+	logger := golog.Default
+	logger.SetLevel("info")
 
-	golog.Child("Router").Infof("Route %s regirested", "/mypath")
-	// registerRoute("/mypath")
-	golog.Child("Router").Warnf("Route %s already exists, skipping second registration", "/mypath")
+	fmt.Println("=== Testing Children Logger Memory Management ===")
 
-	golog.Error("Something went wrong!")
+	// Create some child loggers
+	dbLogger := logger.Child("database")
+	apiLogger := logger.Child("api")
+	cacheLogger := logger.Child("cache")
 
-	var (
-		srvLogger  = golog.Child("Server")
-		app1Logger = srvLogger.Child("App1")
+	fmt.Printf("Initial child count: %d\n", logger.ChildCount())
+	fmt.Printf("Child keys: %v\n", logger.ListChildKeys())
 
-		// Or use a pointer as child's key and append the prefix manually:
-		app2       = newApp("App2")
-		app2Logger = srvLogger.Child(app2).
-				SetChildPrefix(app2.Name).
-				SetLevel("debug")
+	// Test logging from children
+	dbLogger.Info("Database connection established")
+	apiLogger.Warn("API rate limit approaching")
+	cacheLogger.Error("Cache miss detected")
 
-		// Or use a pointer to a value which implements the fmt.Stringer:
-		app3       = newAppWithString("App3")
-		app3Logger = srvLogger.Child(app3)
-	)
+	// Test removing a child
+	fmt.Printf("\nRemoving 'api' child...\n")
+	removed := logger.RemoveChild("api")
+	fmt.Printf("Removed: %t\n", removed)
+	fmt.Printf("Child count after removal: %d\n", logger.ChildCount())
+	fmt.Printf("Child keys after removal: %v\n", logger.ListChildKeys())
 
-	srvLogger.Infof("Hello Server")
-	app1Logger.Infof("Hello App1")
-	app2Logger.Debugf("Hello App2")
-	app3Logger.Warnf("Hello App3")
+	// Try to remove non-existent child
+	fmt.Printf("\nTrying to remove non-existent child...\n")
+	removed = logger.RemoveChild("nonexistent")
+	fmt.Printf("Removed: %t\n", removed)
 
-	srvLogger.LastChild().Infof("Hello App3 again")
-}
+	// Create more children
+	logger.Child("auth").Info("Authentication module loaded")
+	logger.Child("metrics").Info("Metrics collection started")
 
-type app struct {
-	Name string
-}
+	fmt.Printf("\nAfter adding more children:\n")
+	fmt.Printf("Child count: %d\n", logger.ChildCount())
+	fmt.Printf("Child keys: %v\n", logger.ListChildKeys())
 
-func newApp(name string) *app {
-	return &app{Name: name}
-}
+	// Test clearing all children
+	fmt.Printf("\nClearing all children...\n")
+	logger.ClearChildren()
+	fmt.Printf("Child count after clear: %d\n", logger.ChildCount())
+	fmt.Printf("Child keys after clear: %v\n", logger.ListChildKeys())
 
-type appWithString struct {
-	name string
-}
+	// Test that cleared children are truly gone
+	fmt.Printf("\nTesting that children are truly cleared:\n")
+	newDbLogger := logger.Child("database")
+	newDbLogger.Info("New database logger created")
 
-func newAppWithString(name string) *appWithString {
-	return &appWithString{name: name}
-}
+	fmt.Printf("Final child count: %d\n", logger.ChildCount())
+	fmt.Printf("Final child keys: %v\n", logger.ListChildKeys())
 
-func (app *appWithString) String() string {
-	return app.name
+	fmt.Println("\n=== Test Complete ===")
 }

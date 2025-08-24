@@ -1,3 +1,33 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## Sun 24 Aug 2025 | v0.1.14
+
+### Added
+- **Memory Management for Child Loggers**: New methods to prevent memory leaks in long-running applications
+  - `RemoveChild(key any) bool` - Remove specific child logger by key
+  - `ClearChildren()` - Remove all child loggers at once
+  - `ChildCount() int` - Get current number of child loggers
+  - `ListChildKeys() []any` - List all child logger keys
+- **Enhanced Scan Functionality**: Complete implementation of the `Scan()` method
+  - Time-formatted input scanning with `bufio.Scanner`
+  - Goroutine-based processing for non-blocking operation
+  - Proper resource cleanup and error handling
+
+### Changed
+- **Removed External Dependencies**: Eliminated `github.com/kataras/pio` dependency
+  - Replaced with lightweight internal printer system
+  - Maintained 100% API compatibility
+  - Reduced binary size and simplified dependency management
+- **Improved Performance**: Streamlined internal architecture
+  - Direct formatting via `formatLog()` method instead of complex hijacking
+  - Atomic operations for thread-safe multi-writer support
+  - More efficient color and styling system
+
 ## Wed 24 April 2024 | v0.1.12
 
 Accept `slog.Attr` among with `golog.Fields` for extra log data. 

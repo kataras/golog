@@ -1,7 +1,7 @@
 /*
 CBSD 3-Clause License
 
-Copyright (c) 2017-2022, Gerasimos (Makis) Maropoulos (kataras2006@hotmail.com)
+Copyright (c) 2017-2025, Gerasimos (Makis) Maropoulos (kataras2006@hotmail.com)
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@ Source code and other details for the project are available at GitHub:
 
 # Current Version
 
-0.1.12
+0.1.14
 
 # Installation
 
@@ -129,12 +129,6 @@ Golog takes a simple `io.Writer` as its underline Printer's Output.
 Example Code:
 
 	golog.SetOutput(io.Writer)
-
-You can even override the default line braker, "\n", by using the `golog#NewLine` function at startup.
-
-Example Code:
-
-	golog.NewLine("\r\n")
 
 # Levels
 
