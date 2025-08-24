@@ -72,39 +72,7 @@ func Rich(text string, colorCode int, options ...RichOption) string {
 func WriteRich(w io.Writer, text string, colorCode int, options ...RichOption) (int, error) {
 	// If it's a printer, check each writer's support for rich text.
 	if p, ok := w.(*Printer); ok {
-		var lastErr error
-		var n int
-
-		var (
-			richData  []byte
-			plainData = []byte(text)
-		)
-
-		for i, writer := range p.writers {
-			var (
-				written int
-				err     error
-			)
-
-			supportsColor := p.rich[i]
-			if supportsColor {
-				if richData == nil { // set once.
-					richData = []byte(Rich(text, colorCode, options...))
-				}
-				written, err = writer.Write(richData)
-			} else {
-				written, err = writer.Write(plainData)
-			}
-
-			if err != nil {
-				lastErr = err
-			}
-			if written > n {
-				n = written
-			}
-		}
-
-		return n, lastErr
+		return p.WriteRich(text, colorCode, options...)
 	}
 
 	if SupportsColor(w) {
@@ -112,7 +80,7 @@ func WriteRich(w io.Writer, text string, colorCode int, options ...RichOption) (
 		return w.Write([]byte(richText))
 	}
 
-	return w.Write([]byte(text))
+	return w.Write([]byte(text)) // else plain text.
 }
 
 // SupportsColor determines if the output supports ANSI color codes.

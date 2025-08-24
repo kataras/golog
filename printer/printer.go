@@ -28,6 +28,10 @@ func NewPrinter(writer io.Writer) *Printer {
 }
 
 func (p *Printer) setRich() {
+	if p.rich == nil {
+		p.rich = make(map[int]bool, len(p.writers))
+	}
+
 	for i, w := range p.writers {
 		value := SupportsColor(w)
 		p.rich[i] = value
@@ -50,9 +54,9 @@ func (p *Printer) AddOutput(writers ...io.Writer) {
 	p.mu.Unlock()
 }
 
-// Terminal returns a multi writer that includes the writers that output destination is a terminal kind.
+// Terminal returns a new Printer that includes the writers that output destination is a terminal kind.
 // If no terminal writers exist, it returns nil and false.
-func (p *Printer) Terminal() (io.Writer, bool) {
+func (p *Printer) Terminal() (*Printer, bool) {
 	var terminalWriters []io.Writer
 	p.mu.Lock()
 	for _, w := range p.writers {
@@ -65,11 +69,14 @@ func (p *Printer) Terminal() (io.Writer, bool) {
 		return nil, false
 	}
 
-	multiWriter := io.MultiWriter(terminalWriters...)
-	return multiWriter, true
+	newPrinter := &Printer{
+		writers: terminalWriters,
+	}
+	newPrinter.setRich()
+	return newPrinter, true
 }
 
-// TerminalOrStdout returns a multi writer that includes the writers that output destination is a terminal kind.
+// TerminalOrStdout returns an io.Writer that includes the writers that output destination is a terminal kind.
 // If no terminal writers exist, it returns os.Stdout.
 func (p *Printer) TerminalOrStdout() io.Writer {
 	t, ok := p.Terminal()
@@ -79,7 +86,7 @@ func (p *Printer) TerminalOrStdout() io.Writer {
 	return t
 }
 
-// TerminalOrStderr returns a multi writer that includes the writers that output destination is a terminal kind.
+// TerminalOrStderr returns an io.Writer that includes the writers that output destination is a terminal kind.
 // If no terminal writers exist, it returns os.Stderr.
 func (p *Printer) TerminalOrStderr() io.Writer {
 	t, ok := p.Terminal()
@@ -87,6 +94,44 @@ func (p *Printer) TerminalOrStderr() io.Writer {
 		return os.Stderr
 	}
 	return t
+}
+
+// WriteRich writes a formatted string with color and style to all registered writers.
+// It checks each writer's support for rich text and writes accordingly.
+func (p *Printer) WriteRich(text string, colorCode int, options ...RichOption) (int, error) {
+	var lastErr error
+	var n int
+
+	var (
+		richData  []byte
+		plainData = []byte(text)
+	)
+
+	for i, writer := range p.writers {
+		var (
+			written int
+			err     error
+		)
+
+		supportsColor := p.rich[i]
+		if supportsColor {
+			if richData == nil { // set once.
+				richData = []byte(Rich(text, colorCode, options...))
+			}
+			written, err = writer.Write(richData)
+		} else {
+			written, err = writer.Write(plainData)
+		}
+
+		if err != nil {
+			lastErr = err
+		}
+		if written > n {
+			n = written
+		}
+	}
+
+	return n, lastErr
 }
 
 // Write writes data to all registered writers atomically.
