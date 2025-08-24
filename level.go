@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/kataras/golog/internal"
+	"github.com/kataras/golog/printer"
 )
 
 // Level is a number which defines the log level.
@@ -61,29 +61,29 @@ var Levels = map[Level]*LevelMetadata{
 	FatalLevel: {
 		Name:      "fatal",
 		Title:     "[FTAL]",
-		ColorCode: internal.Red,
-		Style:     []internal.RichOption{internal.Background},
+		ColorCode: printer.Red,
+		Style:     []printer.RichOption{printer.Background},
 	},
 	ErrorLevel: {
 		Name:      "error",
 		Title:     "[ERRO]",
-		ColorCode: internal.Red,
+		ColorCode: printer.Red,
 	},
 	WarnLevel: {
 		Name:             "warn",
 		AlternativeNames: []string{"warning"},
 		Title:            "[WARN]",
-		ColorCode:        internal.Magenta,
+		ColorCode:        printer.Magenta,
 	},
 	InfoLevel: {
 		Name:      "info",
 		Title:     "[INFO]",
-		ColorCode: internal.Cyan,
+		ColorCode: printer.Cyan,
 	},
 	DebugLevel: {
 		Name:      "debug",
 		Title:     "[DBUG]",
-		ColorCode: internal.Yellow,
+		ColorCode: printer.Yellow,
 	},
 }
 
@@ -128,7 +128,7 @@ type LevelMetadata struct {
 	// ColorCode a color for the `Title`.
 	ColorCode int
 	// Style one or more rich options for the `Title`.
-	Style []internal.RichOption
+	Style []printer.RichOption
 }
 
 // Text returns the text that should be
@@ -136,14 +136,14 @@ type LevelMetadata struct {
 // log level is being written.
 func (m *LevelMetadata) Text(enableColor bool) string {
 	if enableColor {
-		return internal.Rich(m.Title, m.ColorCode, m.Style...)
+		return printer.Rich(m.Title, m.ColorCode, m.Style...)
 	}
 	return m.Title
 }
 
 // SetText can modify the prefix that will be prepended
 // to the output message log when `Error/Errorf` functions are being used.
-func (m *LevelMetadata) SetText(title string, colorCode int, style ...internal.RichOption) {
+func (m *LevelMetadata) SetText(title string, colorCode int, style ...printer.RichOption) {
 	m.Title = title
 	m.ColorCode = colorCode
 	m.Style = style

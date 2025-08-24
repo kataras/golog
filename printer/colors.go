@@ -1,4 +1,4 @@
-package internal
+package printer
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/kataras/golog/internal/terminal"
+	"github.com/kataras/golog/printer/terminal"
 )
 
 // Standard color codes, any color code can be passed to `Rich` package-level function,

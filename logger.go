@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/kataras/golog/internal"
+	"github.com/kataras/golog/printer"
 )
 
 // Handler is the signature type for logger's handler.
@@ -44,7 +44,7 @@ type Logger struct {
 	// or navigate to: https://github.com/kataras/golog/issues/3#issuecomment-355895870.
 	NewLine bool
 	mu      sync.RWMutex // for logger field changes and printing.
-	Printer *internal.Printer
+	Printer *printer.Printer
 	// The per log level raw writers, optionally.
 	LevelOutput map[Level]io.Writer
 
@@ -64,7 +64,7 @@ func New() *Logger {
 		Level:       InfoLevel,
 		TimeFormat:  "2006/01/02 15:04",
 		NewLine:     true,
-		Printer:     internal.NewPrinter(os.Stdout),
+		Printer:     printer.NewPrinter(os.Stdout),
 		LevelOutput: make(map[Level]io.Writer),
 		formatters: map[string]Formatter{ // the available builtin formatters.
 			"json": new(JSONFormatter),
@@ -125,7 +125,7 @@ func (l *Logger) formatLog(log *Log) {
 	// Format the log entry directly
 	if log.Level != DisableLevel {
 		if level, ok := Levels[log.Level]; ok {
-			internal.WriteRich(w, level.Title, level.ColorCode, level.Style...)
+			printer.WriteRich(w, level.Title, level.ColorCode, level.Style...)
 			_, _ = w.Write(spaceBytes)
 		}
 	}
@@ -151,7 +151,7 @@ func (l *Logger) formatLog(log *Log) {
 }
 
 // NopOutput disables the output.
-var NopOutput = internal.NopOutput()
+var NopOutput = printer.NopOutput()
 
 // SetOutput overrides the Logger's Printer's Output with another `io.Writer`.
 //

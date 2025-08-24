@@ -1,4 +1,4 @@
-package internal
+package printer
 
 import (
 	"bufio"
@@ -6,10 +6,10 @@ import (
 	"maps"
 	"sync"
 
-	"github.com/kataras/golog/internal/terminal"
+	"github.com/kataras/golog/printer/terminal"
 )
 
-// Printer is a simple internal printer that manages multiple output writers
+// Printer is a simple printer that manages multiple output writers
 // and provides thread-safe atomic writes.
 type Printer struct {
 	mu      sync.Mutex
