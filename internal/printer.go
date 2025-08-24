@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"io"
 	"sync"
+
+	"github.com/kataras/golog/internal/terminal"
 )
 
 // Printer is a simple internal printer that manages multiple output writers
@@ -44,6 +46,19 @@ func (p *Printer) AddOutput(writers ...io.Writer) {
 	p.writers = append(p.writers, writers...)
 	p.setRich()
 	p.mu.Unlock()
+}
+
+// Terminal returns a multi writer that includes the writers that output destination is a terminal kind.
+func (p *Printer) Terminal() io.Writer {
+	var terminalWriters []io.Writer
+	p.mu.Lock()
+	for _, w := range p.writers {
+		if terminal.IsTerminal(w) {
+			terminalWriters = append(terminalWriters, w)
+		}
+	}
+	p.mu.Unlock()
+	return io.MultiWriter(terminalWriters...)
 }
 
 // Write writes data to all registered writers atomically.

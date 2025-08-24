@@ -93,7 +93,7 @@ func IsTerminal(f io.Writer) bool {
 	switch v := f.(type) {
 	case *os.File:
 		var st uint32
-		r, _, e := syscall.Syscall(procGetConsoleMode.Addr(), 2, uintptr(v.Fd()), uintptr(unsafe.Pointer(&st)), 0)
+		r, _, e := syscall.SyscallN(procGetConsoleMode.Addr(), 2, uintptr(v.Fd()), uintptr(unsafe.Pointer(&st)), 0)
 		return r != 0 && e == 0
 	default:
 		return false
