@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"maps"
+	"os"
 	"sync"
 
 	"github.com/kataras/golog/printer/terminal"
@@ -50,7 +51,8 @@ func (p *Printer) AddOutput(writers ...io.Writer) {
 }
 
 // Terminal returns a multi writer that includes the writers that output destination is a terminal kind.
-func (p *Printer) Terminal() io.Writer {
+// If no terminal writers exist, it returns nil and false.
+func (p *Printer) Terminal() (io.Writer, bool) {
 	var terminalWriters []io.Writer
 	p.mu.Lock()
 	for _, w := range p.writers {
@@ -59,7 +61,22 @@ func (p *Printer) Terminal() io.Writer {
 		}
 	}
 	p.mu.Unlock()
-	return io.MultiWriter(terminalWriters...)
+	if len(terminalWriters) == 0 {
+		return nil, false
+	}
+
+	multiWriter := io.MultiWriter(terminalWriters...)
+	return multiWriter, true
+}
+
+// TerminalOrStdout returns a multi writer that includes the writers that output destination is a terminal kind.
+// If no terminal writers exist, it returns os.Stdout.
+func (p *Printer) TerminalOrStdout() io.Writer {
+	t, ok := p.Terminal()
+	if !ok {
+		return os.Stdout
+	}
+	return t
 }
 
 // Write writes data to all registered writers atomically.
