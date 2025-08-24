@@ -3,6 +3,7 @@ package internal
 import (
 	"bufio"
 	"io"
+	"maps"
 	"sync"
 
 	"github.com/kataras/golog/internal/terminal"
@@ -145,5 +146,29 @@ func (p *Printer) Scan(r io.Reader) (cancel func()) {
 		default:
 			close(stop)
 		}
+	}
+}
+
+// Clone creates a deep copy of the Printer, including its writers and rich map.
+func (p *Printer) Clone() *Printer {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	// Create a new Printer with the same writers and rich map
+	newRich := make(map[int]bool, len(p.rich))
+	maps.Copy(newRich, p.rich)
+
+	newWriters := make([]io.Writer, 0, len(p.writers)) // Deep copy of writers slice.
+	for _, w := range p.writers {
+		if clonable, ok := w.(interface{ Clone() io.Writer }); ok {
+			newWriters = append(newWriters, clonable.Clone())
+		} else {
+			newWriters = append(newWriters, w)
+		}
+	}
+
+	return &Printer{
+		writers: newWriters,
+		rich:    newRich,
 	}
 }

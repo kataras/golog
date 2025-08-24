@@ -620,7 +620,7 @@ func (l *Logger) Clone() *Logger {
 		Level:          l.Level,
 		TimeFormat:     l.TimeFormat,
 		NewLine:        l.NewLine,
-		Printer:        l.Printer,
+		Printer:        l.Printer.Clone(),
 		LevelOutput:    levelOutput,
 		formatter:      l.formatter,
 		formatters:     formats,
