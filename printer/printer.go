@@ -79,6 +79,16 @@ func (p *Printer) TerminalOrStdout() io.Writer {
 	return t
 }
 
+// TerminalOrStderr returns a multi writer that includes the writers that output destination is a terminal kind.
+// If no terminal writers exist, it returns os.Stderr.
+func (p *Printer) TerminalOrStderr() io.Writer {
+	t, ok := p.Terminal()
+	if !ok {
+		return os.Stderr
+	}
+	return t
+}
+
 // Write writes data to all registered writers atomically.
 func (p *Printer) Write(data []byte) (int, error) {
 	if len(data) == 0 {
