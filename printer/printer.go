@@ -2,6 +2,7 @@ package printer
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"maps"
 	"os"
@@ -159,6 +160,36 @@ func (p *Printer) Write(data []byte) (int, error) {
 	return n, lastErr
 }
 
+// WriteString writes a string to all registered writers atomically.
+func (p *Printer) WriteString(s string) (n int, err error) {
+	if s == "" {
+		return 0, nil
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	var data []byte
+	for _, w := range p.writers {
+		if sw, ok := w.(io.StringWriter); ok {
+			n, err = sw.WriteString(s)
+		} else {
+			if data == nil {
+				data = []byte(s)
+			}
+			n, err = w.Write(data)
+		}
+		if err != nil {
+			return
+		}
+		if n != len(s) {
+			err = io.ErrShortWrite
+			return
+		}
+	}
+	return len(s), nil
+}
+
 // Print writes the string representation of v to all writers.
 func (p *Printer) Print(v any) (int, error) {
 	data := []byte(toString(v))
@@ -169,6 +200,15 @@ func (p *Printer) Print(v any) (int, error) {
 func (p *Printer) Println(v any) (int, error) {
 	data := []byte(toString(v) + "\n")
 	return p.Write(data)
+}
+
+// Printf writes a formatted string to all writers.
+func (p *Printer) Printf(format string, a ...any) (int, error) {
+	if len(a) == 0 {
+		return p.Write([]byte(format))
+	}
+
+	return fmt.Fprintf(p, format, a...)
 }
 
 // toString converts any to string, handling common types.
