@@ -99,7 +99,7 @@ func SupportsColor(w io.Writer) bool {
 	return isTerminal
 }
 
-// NopOutput returns a writer that discards all writes (equivalent to pio.NopOutput).
+// NopOutput returns a writer that discards all writes.
 func NopOutput() io.Writer {
 	return &nopOutput{}
 }

@@ -12,13 +12,13 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 var kernel32 = syscall.NewLazyDLL("kernel32.dll")
 
 var (
-	procGetConsoleMode = kernel32.NewProc("GetConsoleMode")
 	procSetConsoleMode = kernel32.NewProc("SetConsoleMode")
 )
 
@@ -88,14 +88,27 @@ func init() { // modifies the "SupportColors" package-level variable.
 	}
 }
 
-// IsTerminal returns true if stderr's file descriptor is a terminal.
+/*
+// procGetConsoleMode = kernel32.NewProc("GetConsoleMode")
 func IsTerminal(f io.Writer) bool {
 	switch v := f.(type) {
 	case *os.File:
 		var st uint32
-		r, _, e := syscall.SyscallN(procGetConsoleMode.Addr(), 2, uintptr(v.Fd()), uintptr(unsafe.Pointer(&st)), 0)
+		r, _, e := syscall.Syscall(procGetConsoleMode.Addr(), 2, uintptr(v.Fd()), uintptr(unsafe.Pointer(&st)), 0)
 		return r != 0 && e == 0
 	default:
 		return false
 	}
+}
+*/
+
+// IsTerminal returns true if stderr's file descriptor is a terminal.
+func IsTerminal(f io.Writer) bool {
+	file, ok := f.(*os.File)
+	if !ok {
+		return false
+	}
+	var mode uint32
+	err := windows.GetConsoleMode(windows.Handle(file.Fd()), &mode)
+	return err == nil
 }
