@@ -3,6 +3,7 @@ package golog
 import (
 	"io"
 	"time"
+	"uuid"
 )
 
 // Now is called to set the log's timestamp value.
@@ -55,6 +56,18 @@ func SetTimeFormat(s string) *Logger {
 // Negative value disables the stacktrace field.
 func SetStacktraceLimit(limit int) *Logger {
 	return Default.SetStacktraceLimit(limit)
+}
+
+// SetIDGenerator sets the function that produces each Log's ID
+// for the default package-level Logger.
+//
+// It is nil by default, which keeps "id" out of the output entirely.
+//
+//	golog.SetIDGenerator(uuid.NewV7)
+//
+// See `Logger.SetIDGenerator` for the per-request correlation-id form.
+func SetIDGenerator(newID func() uuid.UUID) *Logger {
+	return Default.SetIDGenerator(newID)
 }
 
 // RegisterFormatter registers a Formatter for this logger.

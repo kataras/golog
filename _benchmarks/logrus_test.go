@@ -12,9 +12,8 @@ func BenchmarkLogrusPrint(b *testing.B) {
 	logrus.SetLevel(logrus.DebugLevel)
 
 	b.ReportAllocs()
-	b.StartTimer()
 
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		printLogrus(i)
 	}
 }

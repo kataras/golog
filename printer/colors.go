@@ -1,10 +1,10 @@
 package printer
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"runtime"
+	"strconv"
 
 	"github.com/kataras/golog/printer/terminal"
 )
@@ -34,38 +34,77 @@ const (
 	Bold
 )
 
-// Rich returns a formatted string with color and style codes.
-// If colors are disabled, returns the plain text.
+// Rich returns a formatted string with color and style codes when this
+// process's os.Stdout is a terminal, and the plain text otherwise.
+//
+// It asks about os.Stdout on every call, because os.Stdout is an assignable
+// variable that test helpers routinely swap. Nothing on golog's own write path
+// calls Rich; the Printer decides per writer once, through SupportsColor.
 func Rich(text string, colorCode int, options ...RichOption) string {
-	if !terminal.SupportColors || !terminal.IsTerminal(os.Stdout) {
+	if !terminal.IsTerminal(os.Stdout) {
 		return text
 	}
 
-	var codes []int
-	codes = append(codes, colorCode)
+	return richText(text, colorCode, options...)
+}
+
+// RichText returns "text" wrapped in the ANSI color and style codes, without
+// consulting os.Stdout the way Rich does.
+//
+// It is for callers that already know whether their destination can render
+// colors -- because they were told (LevelMetadata.Text's enableColor) or
+// because they asked about the writer itself (SupportsColor). Rich has to guess
+// for them, and guesses about a different file descriptor.
+//
+// The process-wide terminal.SupportColors switch still applies.
+func RichText(text string, colorCode int, options ...RichOption) string {
+	return richText(text, colorCode, options...)
+}
+
+func richText(text string, colorCode int, options ...RichOption) string {
+	if !terminal.SupportColors {
+		return text
+	}
+
+	return string(AppendRich(make([]byte, 0, len(text)+16), text, colorCode, options...))
+}
+
+// AppendRich appends "text" wrapped in the ANSI color and style codes to
+// "dst" and returns the extended slice. It is RichText for callers building a
+// line in a buffer, which is what keeps a colored title from costing an
+// allocation per log line.
+//
+// When terminal.SupportColors is off the plain text is appended instead.
+func AppendRich(dst []byte, text string, colorCode int, options ...RichOption) []byte {
+	if !terminal.SupportColors {
+		return append(dst, text...)
+	}
+
+	// "\033[" + code(+";"+code)... + "m" + text + "\033[0m".
+	dst = append(dst, '\033', '[')
+	dst = strconv.AppendInt(dst, int64(colorCode), 10)
 
 	for _, opt := range options {
+		var code int
 		switch opt {
 		case Background:
-			codes = append(codes, colorCode+10) // Background colors are +10
+			code = colorCode + 10 // background colors are +10.
 		case Underline:
-			codes = append(codes, 4)
+			code = 4
 		case Bold:
-			codes = append(codes, 1)
+			code = 1
+		default:
+			continue
 		}
+
+		dst = append(dst, ';')
+		dst = strconv.AppendInt(dst, int64(code), 10)
 	}
 
-	if len(codes) == 1 {
-		return fmt.Sprintf("\033[%dm%s\033[0m", codes[0], text)
-	}
-
-	// Multiple codes
-	codeStr := fmt.Sprintf("%d", codes[0])
-	for _, code := range codes[1:] {
-		codeStr += fmt.Sprintf(";%d", code)
-	}
-
-	return fmt.Sprintf("\033[%sm%s\033[0m", codeStr, text)
+	dst = append(dst, 'm')
+	dst = append(dst, text...)
+	dst = append(dst, '\033', '[', '0', 'm')
+	return dst
 }
 
 // WriteRich writes a formatted string with color and style to the writer.
@@ -76,14 +115,16 @@ func WriteRich(w io.Writer, text string, colorCode int, options ...RichOption) (
 	}
 
 	if SupportsColor(w) {
-		richText := Rich(text, colorCode, options...)
-		return w.Write([]byte(richText))
+		return io.WriteString(w, richText(text, colorCode, options...))
 	}
 
-	return w.Write([]byte(text)) // else plain text.
+	return io.WriteString(w, text) // else plain text.
 }
 
 // SupportsColor determines if the output supports ANSI color codes.
+//
+// For an *os.File the answer is a syscall, so callers on a hot path should
+// ask once and remember, as the Printer and Logger.SetLevelOutput do.
 func SupportsColor(w io.Writer) bool {
 	if w == nil {
 		return false

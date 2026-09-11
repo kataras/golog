@@ -1,5 +1,5 @@
 /*
-CBSD 3-Clause License
+BSD 3-Clause License
 
 Copyright (c) 2017-2026, Gerasimos (Makis) Maropoulos (kataras2006@hotmail.com)
 All rights reserved.
@@ -28,6 +28,7 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
 /*
 Package golog provides an easy to use foundation for your logging operations.
@@ -38,11 +39,11 @@ Source code and other details for the project are available at GitHub:
 
 # Current Version
 
-0.1.14
+0.2.0
 
 # Installation
 
-The only requirement is the Go Programming Language
+The only requirement is the Go Programming Language, version 1.27 or later.
 
 	$ go get github.com/kataras/golog@latest
 
@@ -139,6 +140,8 @@ Available built'n levels are:
 
 	// DisableLevel will disable printer
 	DisableLevel Level = iota
+	// FatalLevel will `os.Exit(1)` no matter the level of the logger
+	FatalLevel
 	// ErrorLevel will print only errors
 	ErrorLevel
 	// WarnLevel will print errors and warnings
@@ -166,7 +169,8 @@ Example Code:
 
 		// First argument is the raw text for outputs
 		// second argument is the color code
-		// and the last, variadic argument can be any `kataras/pio.RichOption`, e.g. pio.Background, pio.Underline.
+		// and the last, variadic argument can be any `golog/printer.RichOption`,
+		// e.g. printer.Background, printer.Underline, printer.Bold.
 
 		// Default is "[ERRO]"
 		golog.ErrorText("|ERROR|", 31)
@@ -212,12 +216,14 @@ Example Code:
 		// First we create our level to a golog.Level
 		// in order to be used in the Log functions.
 		var SuccessLevel golog.Level = 6
-		// Register our level, just three fields.
-		golog.Levels[SuccessLevel] = &golog.LevelMetadata{
+		// Register our level, just three fields. RegisterLevel is safe to
+		// call at any time; writing to golog.Levels directly also works,
+		// as long as it happens before logging starts.
+		golog.RegisterLevel(SuccessLevel, &golog.LevelMetadata{
 			Name:      "success",
 			Title:     "[SUCC]",
 			ColorCode: 32, // Green
-		}
+		})
 
 		// create a new golog logger
 		myLogger := golog.New()
@@ -276,7 +282,7 @@ Outline:
 	//	Install(myLogger) OR Install(slog.Default())
 	//
 	// Look `golog#Logger.Handle` for more.
-	Install(logger ExternalLogger)
+	Install(logger any)
 
 # Logrus Integration
 
@@ -353,6 +359,59 @@ Example Code:
 		golog.Warn("this info message will not be visible")
 	}
 
+# Log Identifiers
+
+Every Log can carry a unique identifier, taken from the standard library's uuid
+package. It is off by default: Log.ID stays the zero UUID and no "id" appears in
+any output until a generator is installed.
+
+Example Code:
+
+	package main
+
+	import (
+		"uuid"
+
+		"github.com/kataras/golog"
+	)
+
+	func main() {
+		// NewV7 is the one to reach for in logs: v7 UUIDs carry a timestamp in
+		// their leading bits, so the identifiers sort in the order the lines
+		// were written.
+		golog.SetIDGenerator(uuid.NewV7)
+
+		golog.Info("this line has an id of its own")
+	}
+
+Returning a fixed value instead tags every entry of a logger with the same
+identifier, which is what a per-request logger wants: one request's lines can
+then be picked back out of the stream. Derive that logger with Clone, which
+nothing else shares. Child is not the tool here: it caches one logger per key,
+so two requests on the same route would be setting each other's id.
+
+	requestID := uuid.NewV7()
+	reqLogger := golog.Default.Clone().
+		SetIDGenerator(func() uuid.UUID { return requestID })
+
+	reqLogger.Info("started")  // both lines carry
+	reqLogger.Info("finished") // the same id
+
+# Typed Fields
+
+Handler and Formatter authors read a log's data out of its Fields map, which is
+a map[string]any. Fields.Get and its Log.Field shorthand do the type assertion
+for you and report whether it held:
+
+	golog.Handle(func(log *golog.Log) bool {
+		username, ok := log.Field[string]("username")
+		if ok {
+			// [...]
+		}
+
+		return false
+	})
+
 # That's the basics
 
 But you should have a basic idea of the golog package by now, we just scratched the surface.
@@ -365,4 +424,4 @@ Examples:
 package golog
 
 // Version is the version string representation of the "golog" package.
-const Version = "0.1.12"
+const Version = "0.2.0"

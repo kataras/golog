@@ -1,1 +1,19 @@
 .vscode
+
+# Build and test artifacts.
+*.exe
+*.test
+coverage.out
+
+# Written into the tree by the examples when they are run.
+debug.log
+info.log
+access_log.*
+# AI
+.plexon
+PLEXON.md
+.claude
+CLAUDE.md
+.agents
+AGENTS.md
+.codex

@@ -1,0 +1,84 @@
+# golangci-lint configuration, v2 schema.
+#
+# Kept in step with the golangci-lint-action@v9 pin in .github/workflows/ci.yml.
+# Action v7 and later drive golangci-lint v2 only, and v9 is the first that runs
+# on Node 24 rather than the Node 20 that GitHub has deprecated. Changing either
+# of the two means checking the other: the action validates this file against
+# the JSON schema for the golangci-lint version it installs, so a v1-schema file
+# fails the run outright rather than being ignored.
+#
+# The bar here is "find me a bug", not "make the code look like everyone
+# else's". A lint job that reports thirty things nobody intends to act on is a
+# job people learn to skip, and then it catches nothing when it finally has
+# something worth saying. So the set below is deliberately narrow, and every
+# exclusion says why.
+version: "2"
+
+linters:
+  default: standard
+
+  disable:
+    # errcheck insists every returned error is handled. In a logger, most of
+    # what it finds is a write to the output that just failed -- and the only
+    # place left to report that failure is the output that just failed. The
+    # formatLog path already discards those returns explicitly, with `_, _ =`,
+    # because there is nothing else to do with them.
+    #
+    # This is not a claim that dropped errors never matter. It is a claim that a
+    # check with this hit rate cannot tell the two apart in this package, so it
+    # belongs in review rather than in a gate. The errors that do matter here --
+    # the ones from the JSON encoder -- are checked, and are covered by tests.
+    - errcheck
+
+  settings:
+    staticcheck:
+      # staticcheck ships four families and only one of them finds bugs.
+      #
+      #   SA  - correctness: deprecated APIs, unreachable branches, values
+      #         computed and then thrown away. This is the family worth failing
+      #         a build over. It has already earned its place: SA1019 is what
+      #         flags syscall.Syscall6, the deprecated call the Go 1.27
+      #         printer/terminal rewrite removed.
+      #   S1  - simplifications. Unwanted on the hot paths. richText builds its
+      #         escape sequence by hand with strconv.AppendInt precisely because
+      #         the tidier fmt.Sprintf form allocates, and a linter that keeps
+      #         proposing the tidier form is one that will eventually be obeyed
+      #         by mistake.
+      #   ST1 - naming and comment style. Opinion, not correctness.
+      #   QF1 - quickfix refactors. Opinion, not correctness.
+      checks:
+        - all
+        - -S1*
+        - -ST1*
+        - -QF1*
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+
+    paths:
+      # Both are separate modules with their own go.mod, and both begin with an
+      # underscore, so `go build ./...` and this linter already skip them. Listed
+      # anyway so that running golangci-lint from the repository root with an
+      # explicit path cannot pull them in with the wrong module context. They are
+      # covered by `go vet` in the test job instead.
+      - _examples
+      - _benchmarks
+      - third_party$
+      - builtin$
+      - examples$
+
+formatters:
+  # Formatting is checked by the `gofmt -l .` step in CI, which covers every
+  # module in the tree rather than only the one being linted. Enabling a
+  # formatter here as well would mean two places to fix the same complaint.
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

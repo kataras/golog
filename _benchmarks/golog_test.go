@@ -19,10 +19,25 @@ func BenchmarkGologPrint(b *testing.B) {
 	golog.SetTimeFormat("")
 
 	b.ReportAllocs()
-	b.StartTimer()
 
-	for i := 0; i < b.N; i++ {
+	for i := 0; b.Loop(); i++ {
 		printGolog(i)
+	}
+}
+
+func BenchmarkGologPrintJSON(b *testing.B) {
+	logger := golog.New()
+	logger.SetOutput(nopOutput)
+	logger.SetLevel("debug")
+	logger.SetTimeFormat("")
+	logger.SetFormat("json", "")
+
+	b.ReportAllocs()
+
+	for i := 0; b.Loop(); i++ {
+		logger.Errorf("[%d] This is an error message", i)
+		logger.Warnf("[%d] This is a warning message", i)
+		logger.Infof("[%d] This is an info message", i)
 	}
 }
 

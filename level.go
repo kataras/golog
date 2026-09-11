@@ -1,9 +1,13 @@
 package golog
 
 import (
+	"encoding/json/jsontext"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 
 	"github.com/kataras/golog/printer"
 )
@@ -13,17 +17,32 @@ type Level uint32
 
 // MarshalJSON implements the json marshaler for Level.
 func (l Level) MarshalJSON() ([]byte, error) {
-	if level, ok := Levels[l]; ok {
+	if level, ok := lookupLevel(l); ok {
 		return []byte(strconv.Quote(level.Name)), nil
 	}
 
-	return nil, fmt.Errorf("unknown level %v", l)
+	return nil, fmt.Errorf("unknown level %v", uint32(l))
+}
+
+// MarshalJSONTo implements the encoding/json/v2 MarshalerTo interface for Level.
+//
+// It exists alongside MarshalJSON rather than replacing it. Both the v1 and the
+// v2 json packages prefer this method when a type has both, and writing the
+// name straight into the encoder saves the quoted []byte that MarshalJSON has
+// to allocate for every log line. MarshalJSON stays for callers that invoke it
+// directly and for anything still reflecting on the v1 Marshaler interface.
+func (l Level) MarshalJSONTo(enc *jsontext.Encoder) error {
+	if level, ok := lookupLevel(l); ok {
+		return enc.WriteToken(jsontext.String(level.Name))
+	}
+
+	return fmt.Errorf("unknown level %v", uint32(l))
 }
 
 // String implements the fmt.Stringer interface for level.
 // Returns the level's name.
 func (l Level) String() string {
-	if level, ok := Levels[l]; ok {
+	if level, ok := lookupLevel(l); ok {
 		return level.Name
 	}
 
@@ -49,13 +68,19 @@ const (
 )
 
 // Levels contains the levels and their
-// mapped (pointer of, in order to be able to be modified) metadata, callers
-// are allowed to modify this package-level global variable
-// without any loses.
+// mapped (pointer of, in order to be able to be modified) metadata.
+//
+// Callers may add or replace entries, and may change an entry's fields. The
+// safe way to do either while the program is already logging is `RegisterLevel`
+// and `LevelMetadata.SetText`. Writing to the map or to a metadata field
+// directly also works, but only before the first log line, or followed by
+// `ReloadLevels`: logging never reads this map on its own hot path, it reads a
+// snapshot taken from it, so a direct write after that point is not seen until
+// the next snapshot.
 var Levels = map[Level]*LevelMetadata{
 	DisableLevel: {
 		Name:             "disable",
-		AlternativeNames: []string{"disabled"},
+		AlternativeNames: []string{"disabled", "none", "off"},
 		Title:            "",
 	},
 	FatalLevel: {
@@ -87,25 +112,139 @@ var Levels = map[Level]*LevelMetadata{
 	},
 }
 
+// levelTable is an immutable copy of Levels. Every lookup on the logging path
+// goes through one, so a caller writing to Levels can neither race with a log
+// line nor throw the process with a concurrent map access.
+type levelTable struct {
+	byLevel map[Level]*LevelMetadata
+	// ordered holds the levels ascending, so ParseLevel resolves a name shared
+	// by two levels the same way every time instead of by map iteration order.
+	ordered []Level
+}
+
+var (
+	// levelsMu guards writes to Levels made through this package and the
+	// rebuild of the snapshot. Direct writes by callers are not covered, which
+	// is why the Levels doc asks for them to happen before logging starts.
+	levelsMu sync.Mutex
+	levels   atomic.Pointer[levelTable]
+)
+
+// RegisterLevel adds "level" to `Levels` with the given metadata, or replaces
+// the metadata it already has, and makes the change visible to logging at
+// once. It is the runtime-safe form of `Levels[level] = meta`.
+//
+//	const SuccessLevel golog.Level = 6
+//	golog.RegisterLevel(SuccessLevel, &golog.LevelMetadata{
+//		Name:      "success",
+//		Title:     "[SUCC]",
+//		ColorCode: printer.Green,
+//	})
+func RegisterLevel(level Level, meta *LevelMetadata) {
+	levelsMu.Lock()
+	Levels[level] = meta
+	reloadLevelsLocked()
+	levelsMu.Unlock()
+}
+
+// ReloadLevels makes changes written directly to `Levels`, or to the fields of
+// one of its entries, visible to logging. `RegisterLevel` and
+// `LevelMetadata.SetText` call it on the caller's behalf.
+func ReloadLevels() {
+	reloadLevels()
+}
+
+func reloadLevels() *levelTable {
+	levelsMu.Lock()
+	defer levelsMu.Unlock()
+	return reloadLevelsLocked()
+}
+
+// reloadLevelsLocked rebuilds the snapshot from Levels. The caller holds levelsMu.
+func reloadLevelsLocked() *levelTable {
+	t := &levelTable{
+		byLevel: make(map[Level]*LevelMetadata, len(Levels)),
+		ordered: make([]Level, 0, len(Levels)),
+	}
+
+	for level, meta := range Levels {
+		if meta == nil {
+			continue
+		}
+		// A copy, so that a later SetText on the caller's pointer cannot
+		// change a snapshot that is being read.
+		c := *meta
+		c.AlternativeNames = slices.Clone(meta.AlternativeNames)
+		c.Style = slices.Clone(meta.Style)
+		t.byLevel[level] = &c
+		t.ordered = append(t.ordered, level)
+	}
+	slices.Sort(t.ordered)
+
+	levels.Store(t)
+	return t
+}
+
+// currentLevels returns the snapshot, building it on first use.
+func currentLevels() *levelTable {
+	if t := levels.Load(); t != nil {
+		return t
+	}
+	return reloadLevels()
+}
+
+// lookupLevel returns the metadata of "level" as logging sees it.
+//
+// A miss rebuilds the snapshot once and looks again, so a level added to
+// `Levels` directly since the last rebuild (the init-time pattern of the
+// examples) is picked up on first use. An entry that is genuinely unknown pays
+// that rebuild on every lookup, which is the cost of logging at an
+// unregistered level.
+func lookupLevel(level Level) (*LevelMetadata, bool) {
+	if meta, ok := currentLevels().byLevel[level]; ok {
+		return meta, true
+	}
+
+	meta, ok := reloadLevels().byLevel[level]
+	return meta, ok
+}
+
 // ParseLevel returns a `golog.Level` from a string level.
 // Note that all existing log levels (name, prefix and color) can be customized
 // and new one can be added by the package-level `golog.Levels` map variable.
+//
+// An unknown name yields `DisableLevel`.
 func ParseLevel(levelName string) Level {
 	levelName = strings.ToLower(levelName)
 
-	for level, meta := range Levels {
-		if strings.ToLower(meta.Name) == levelName {
-			return level
+	if level, ok := currentLevels().parse(levelName); ok {
+		return level
+	}
+
+	// Same reasoning as lookupLevel: the name may belong to a level written
+	// into Levels directly since the last rebuild.
+	if level, ok := reloadLevels().parse(levelName); ok {
+		return level
+	}
+
+	return DisableLevel
+}
+
+func (t *levelTable) parse(lowerName string) (Level, bool) {
+	for _, level := range t.ordered {
+		meta := t.byLevel[level]
+		if strings.ToLower(meta.Name) == lowerName {
+			return level, true
 		}
 
 		for _, altName := range meta.AlternativeNames {
-			if strings.ToLower(altName) == levelName {
-				return level
+			if strings.ToLower(altName) == lowerName {
+				return level, true
 			}
 		}
 	}
 
-	return DisableLevel
+	return DisableLevel, false
 }
 
 // LevelMetadata describes the information
@@ -134,64 +273,60 @@ type LevelMetadata struct {
 // Text returns the text that should be
 // prepended to the log message when a specific
 // log level is being written.
+//
+// With "enableColor" set the ANSI escapes are always emitted; it is the
+// caller's statement that the destination renders them, typically the answer
+// of `printer.SupportsColor(w)` for that destination. It does not consult
+// os.Stdout.
 func (m *LevelMetadata) Text(enableColor bool) string {
 	if enableColor {
-		return printer.Rich(m.Title, m.ColorCode, m.Style...)
+		return printer.RichText(m.Title, m.ColorCode, m.Style...)
 	}
 	return m.Title
 }
 
 // SetText can modify the prefix that will be prepended
 // to the output message log when `Error/Errorf` functions are being used.
+//
+// The change is visible to logging at once; see `Levels`.
 func (m *LevelMetadata) SetText(title string, colorCode int, style ...printer.RichOption) {
 	m.Title = title
 	m.ColorCode = colorCode
 	m.Style = style
+	ReloadLevels()
 }
 
 var (
 	// ErrorText can modify the prefix that will be prepended
 	// to the output message log when `Error/Errorf` functions are being used.
 	//
-	// If "newColorfulText" is empty then it will update the text color version using
-	// the default values by using the new raw text.
+	// Defaults to "[ERRO]" in red.
 	//
-	// Defaults to "[ERRO]" and pio.Red("[ERRO]").
-	//
-	// Deprecated Use `Levels[ErrorLevel].SetText(string, string)` instead.
+	// Deprecated: Use `Levels[ErrorLevel].SetText(title string, colorCode int, style ...printer.RichOption)` instead.
 	ErrorText = Levels[ErrorLevel].SetText
 
 	// WarnText can modify the prefix that will be prepended
 	// to the output message log when `Warn/Warnf` functions are being used.
 	//
-	// If "newColorfulText" is empty then it will update the text color version using
-	// the default values by using the new raw text.
+	// Defaults to "[WARN]" in magenta.
 	//
-	// Defaults to "[WARN]" and pio.Purple("[WARN]").
-	//
-	// Deprecated Use `Levels[WarnLevel].SetText(string, string)` instead.
+	// Deprecated: Use `Levels[WarnLevel].SetText(title string, colorCode int, style ...printer.RichOption)` instead.
 	WarnText = Levels[WarnLevel].SetText
 
 	// InfoText can modify the prefix that will be prepended
 	// to the output message log when `Info/Infof` functions are being used.
 	//
-	// If "newColorfulText" is empty then it will update the text color version using
-	// the default values by using the new raw text.
+	// Defaults to "[INFO]" in cyan.
 	//
-	// Defaults to "[INFO]" and pio.LightGreen("[INFO]").
-	//
-	// Deprecated Use `Levels[InfoLevel].SetText(string, string)` instead.
+	// Deprecated: Use `Levels[InfoLevel].SetText(title string, colorCode int, style ...printer.RichOption)` instead.
 	InfoText = Levels[InfoLevel].SetText
 
 	// DebugText can modify the prefix that will be prepended
-	// to the output message log when `Info/Infof` functions are being used.
+	// to the output message log when `Debug/Debugf` functions are being used.
 	//
-	// If "newColorfulText" is empty then it will update the text color version using
-	// the default values by using the new raw text.
+	// Defaults to "[DBUG]" in yellow.
 	//
-	// Defaults to "[DBUG]" and pio.Yellow("[DBUG]").
-	//
-	// Deprecated Use `Levels[DebugLevel].SetText(string, string)` instead.
+	// Deprecated: Use `Levels[DebugLevel].SetText(title string, colorCode int, style ...printer.RichOption)` instead.
 	DebugText = Levels[DebugLevel].SetText
 
 	// GetTextForLevel is the function which
@@ -202,7 +337,7 @@ var (
 	//
 	// It can be used to override the default behavior, at the start-up state.
 	GetTextForLevel = func(level Level, enableColor bool) string {
-		if meta, ok := Levels[level]; ok {
+		if meta, ok := lookupLevel(level); ok {
 			return meta.Text(enableColor)
 		}
 		return ""
@@ -212,7 +347,7 @@ var (
 	// has the "final" responsibility to generagte the name of the level
 	// that is prepended to the leveled log message
 	GetNameForLevel = func(level Level) string {
-		if meta, ok := Levels[level]; ok {
+		if meta, ok := lookupLevel(level); ok {
 			return meta.Name
 		}
 		return ""

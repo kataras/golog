@@ -1,114 +1,75 @@
-//go:build windows && !appengine
-// +build windows,!appengine
+//go:build windows
 
 package terminal
 
 import (
-	"bytes"
-	"errors"
 	"io"
 	"os"
-	"os/exec"
-	"strconv"
-	"strings"
-	"syscall"
 
 	"golang.org/x/sys/windows"
 )
 
-var kernel32 = syscall.NewLazyDLL("kernel32.dll")
-
-var (
-	procSetConsoleMode = kernel32.NewProc("SetConsoleMode")
-)
-
+// Console output modes, from the Windows SetConsoleMode documentation:
+// https://learn.microsoft.com/en-us/windows/console/setconsolemode
+//
+// x/sys/windows exports the ENABLE_*_INPUT half of these but not the output
+// half, so they are spelled out here.
 const (
-	enableProcessedOutput           = 0x0001
-	enableWrapAtEolOutput           = 0x0002
 	enableVirtualTerminalProcessing = 0x0004
 )
 
-func getVersion() (float64, int, error) {
-	stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
-	cmd := exec.Command("cmd", "ver")
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
-	err := cmd.Run()
-	if err != nil {
-		return -1, -1, err
-	}
-
-	errCanNotDetermineVersion := errors.New("can't determine Windows version")
-	lines := stdout.String()
-	start := strings.IndexByte(lines, '[')
-	end := strings.IndexByte(lines, ']')
-	if start == -1 || end == -1 {
-		return -1, -1, errCanNotDetermineVersion
-	}
-
-	winLine := lines[start+1 : end]
-	if len(winLine) < 10 {
-		return -1, -1, errCanNotDetermineVersion
-	}
-	// Version 10.0.15063
-	versionsLine := winLine[strings.IndexByte(winLine, ' ')+1:]
-	// 10.0.15063
-	versionSems := strings.Split(versionsLine, ".")
-	// 10
-	// 0
-	// 15063
-	if len(versionSems) < 3 {
-		return -1, -1, errCanNotDetermineVersion
-	}
-
-	buildNumber, _ := strconv.Atoi(versionSems[2])
-	major, err := strconv.ParseFloat(versionSems[0], 64)
-	return major, buildNumber, err
-}
+// firstColorBuild is the Windows 10 build that introduced 24-bit color
+// support in the console host (Threshold 2, November 2015).
+const firstColorBuild = 10586
 
 func init() { // modifies the "SupportColors" package-level variable.
 	SupportColors = false
 
-	major, buildNumber, err := getVersion()
-	if err != nil {
+	// RtlGetVersion reports the real OS version, unaffected by the
+	// application-compatibility shims that make GetVersionEx lie to
+	// programs without a matching manifest. It cannot fail.
+	//
+	// This used to shell out to `cmd ver` and parse the build number out of
+	// its output, which cost a process launch in every binary that imported
+	// golog and reads to antivirus heuristics like a program hiding a shell.
+	v := windows.RtlGetVersion()
+	if v.MajorVersion < 10 {
 		return
 	}
 
-	// Activate Virtual Processing for Windows CMD
-	// Info: https://msdn.microsoft.com/en-us/library/windows/desktop/ms686033(v=vs.85).aspx
-	if major >= 10 {
-		handle := syscall.Handle(os.Stderr.Fd())
-		procSetConsoleMode.Call(uintptr(handle), enableProcessedOutput|enableWrapAtEolOutput|enableVirtualTerminalProcessing)
-
-		// check specific for windows operating system
-		// versions, after windows 10 microsoft
-		// gave support for 256-color console.
-		SupportColors = buildNumber >= 10586
+	// Activate virtual terminal processing so ANSI escape sequences are
+	// interpreted rather than printed literally. Both standard handles are
+	// tried: the default Printer writes to stdout, and when stderr alone is
+	// redirected to a file the console still needs the mode set through the
+	// handle that is a console. A redirected handle fails GetConsoleMode and
+	// is skipped, which is not a reason to disable color for the other one.
+	// The existing flags are kept and only the VT bit is added.
+	for _, f := range []*os.File{os.Stdout, os.Stderr} {
+		enableVirtualTerminal(windows.Handle(f.Fd()))
 	}
+
+	SupportColors = v.BuildNumber >= firstColorBuild
 }
 
-/*
-// procGetConsoleMode = kernel32.NewProc("GetConsoleMode")
-func IsTerminal(f io.Writer) bool {
-	switch v := f.(type) {
-	case *os.File:
-		var st uint32
-		r, _, e := syscall.Syscall(procGetConsoleMode.Addr(), 2, uintptr(v.Fd()), uintptr(unsafe.Pointer(&st)), 0)
-		return r != 0 && e == 0
-	default:
-		return false
+func enableVirtualTerminal(h windows.Handle) {
+	var mode uint32
+	if err := windows.GetConsoleMode(h, &mode); err != nil {
+		return // not a console.
 	}
+	if mode&enableVirtualTerminalProcessing != 0 {
+		return // already on, as it is under Windows Terminal.
+	}
+	_ = windows.SetConsoleMode(h, mode|enableVirtualTerminalProcessing)
 }
-*/
 
-// IsTerminal returns true if stderr's file descriptor is a terminal.
-func IsTerminal(f io.Writer) bool {
-	file, ok := f.(*os.File)
+// IsTerminal reports whether "w" writes to a terminal device.
+func IsTerminal(w io.Writer) bool {
+	f, ok := w.(*os.File)
 	if !ok {
 		return false
 	}
+
 	var mode uint32
-	err := windows.GetConsoleMode(windows.Handle(file.Fd()), &mode)
+	err := windows.GetConsoleMode(windows.Handle(f.Fd()), &mode)
 	return err == nil
 }

@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [master]
 
+# Nothing here writes to the repository. Without this block the token would
+# carry whatever the repository default is, which for many repositories is
+# write.
 permissions:
   contents: read
 
@@ -13,30 +16,158 @@ jobs:
 
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
+    # printer/terminal has a separate implementation per platform, and until
+    # this matrix existed only the Linux one was ever compiled, let alone run.
+    # The Windows one in particular sets console modes from init().
     strategy:
+      fail-fast: false
       matrix:
-        go_version: [1.25.x]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
     steps:
 
+    # checkout and setup-go are on v7 for the same reason golangci-lint-action
+    # is on v9 below: v6 and earlier run on Node 20, which GitHub has
+    # deprecated, and v7 of both moved to Node 24.
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
+    # The go directive in go.mod is the single source of truth for the minimum
+    # Go version. There used to be a `go_version` matrix here as well, which
+    # nothing referenced -- go-version-file won and the matrix entry sat at
+    # 1.25.x for two releases without anyone noticing.
     - name: Set up Go 1.x
-      uses: actions/setup-go@v6
+      uses: actions/setup-go@v7
       with:
         go-version-file: './go.mod'
         check-latest: true
     - run: go version
 
+    - name: Vet
+      run: go vet ./...
+
     - name: Test
-      run: go test -v ./...
+      run: go test -race -count=1 -v ./...
 
-    - name: Setup examples for testing
-      run: ./.github/scripts/setup_examples_test.bash
+    # Directories beginning with an underscore are invisible to ./..., and both
+    # of these are separate modules on top of that, so nothing above compiles
+    # them. _benchmarks went unbuilt long enough to stop compiling entirely:
+    # it still imported kataras/pio, which golog dropped in v0.1.14.
+    #
+    # The benchmarks are built, not run. Timings from a shared runner are noise.
+    - name: Build the examples
+      run: cd _examples && go build ./... && go vet ./...
 
-    - name: Test examples
-      continue-on-error: true
-      working-directory: _examples
-      run: go test -v -mod=mod -cover -race ./...
+    - name: Build the logrus example
+      run: cd _examples/integrations/logrus && go build ./... && go vet ./...
+
+    - name: Build the benchmarks
+      run: cd _benchmarks && go build ./... && go vet ./...
+
+    - name: Check formatting
+      if: matrix.os == 'ubuntu-latest'
+      run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+
+    # go fix carries the modernizers in Go 1.27. An empty diff is the check.
+    - name: Check for pending modernizations
+      if: matrix.os == 'ubuntu-latest'
+      run: test -z "$(go fix -diff ./... 2>&1)" || (go fix -diff ./... && exit 1)
+
+  # Kept in a separate job from the tests, as golangci-lint's own documentation
+  # asks: the linter and `go test` both want the whole machine.
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+
+    # Checkout before setup-go, as in every job: setup-go keys its module cache
+    # off go.sum and cannot find it before the tree exists.
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v7
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v7
+      with:
+        go-version-file: './go.mod'
+        check-latest: true
+
+    # Pinned deliberately, and the two pins move together.
+    #
+    # golangci-lint-action v9 is the first major that runs on Node 24. Action v7
+    # and later drive golangci-lint v2 only, and v2 does not read the v1
+    # configuration schema -- the action validates .golangci.yml against the
+    # schema for the version it installs before running anything, so a config
+    # left on the v1 schema fails the job rather than being ignored.
+    #
+    # golangci-lint v2.13 is a floor, not a preference: a released binary embeds
+    # the standard library of the Go SDK that built it, and v2.12's was
+    # go1.26.2, which refuses to run against a module whose go directive says
+    # 1.27 ("the Go language version used to build golangci-lint is lower than
+    # the targeted Go version"). That is a hard failure of the whole job, not a
+    # lint diff. Any future bump of the go directive needs the same check.
+    #
+    # Dependabot watches `github-actions` and will raise the `uses:` line on its
+    # own. It does not know what `version:` below means, so that is the half
+    # that goes stale silently. Check it when the action moves.
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v9
+      with:
+        version: v2.13
+
+  # Every target the toolchain knows about.
+  #
+  # This job exists because four of them -- js/wasm, wasip1/wasm, plan9 and aix
+  # -- did not compile at all until the Go 1.27 migration: printer/terminal had
+  # no IsTerminal for any platform outside linux/bsd/solaris/windows, and
+  # nothing here ever asked. iris carried a comment in its own cross-compile job
+  # noting that js/wasm "fails inside kataras/golog".
+  #
+  # aix is the one to watch: it regressed once already, from a constants file
+  # whose name ended in _solaris, because a GOOS filename suffix ANDs with the
+  # //go:build line above it.
+  crosscompile:
+    name: Cross-compile
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v7
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v7
+      with:
+        go-version-file: './go.mod'
+        check-latest: true
+
+    - name: Build for every GOOS/GOARCH
+      run: |
+        rc=0
+        for target in $(go tool dist list); do
+          if GOOS="${target%/*}" GOARCH="${target#*/}" go build ./...; then
+            echo "ok   $target"
+          else
+            echo "FAIL $target"
+            rc=1
+          fi
+        done
+        exit $rc
+
+  govulncheck:
+    name: Vulnerability scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v7
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v7
+      with:
+        go-version-file: './go.mod'
+        check-latest: true
+
+    - name: Run govulncheck
+      run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...

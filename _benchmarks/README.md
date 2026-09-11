@@ -1,28 +1,44 @@
 # Running the benchmarks
 
+This directory is its own module, with a `replace` pointing at the checkout one
+level up, so it always measures the working tree.
+
 ```bash
-$ cd $GOPATH/src/github.com/kataras/golog/_benchmarks
-$ go get ./...
-$ go test -v -bench=. -benchtime=20s
+$ cd _benchmarks
+$ go test -run xxx -bench . -benchmem -count=3
 ```
 
 # Results
 
-| test | times ran (large is better) |  ns/op (small is better) | B/op (small is better) | allocs/op (small is better) |
-| -----------|--------|-------------|-------------|-------------|
-| **BenchmarkGologPrint** | 10000000 | 3749 ns/op | 890 B/op | 28 allocs/op |
-| BenchmarkLogrusPrint | &nbsp; 3000000 | 9609 ns/op | 1611 B/op | 64 allocs/op |
+Each operation writes three log lines (error, warning, info) to a nop output,
+except `BenchmarkGologPrintFile`, which writes them to a real file so that the
+syscalls count too.
 
-> Feel free to send a [PR](https://github.com/kataras/golog/pulls) of your own loger benchmark to put it here!
+| test | ns/op (small is better) | B/op (small is better) | allocs/op (small is better) |
+| ----------- | ------------- | ------------- | ------------- |
+| **BenchmarkGologPrint** | 923 ns/op | 154 B/op | 5 allocs/op |
+| **BenchmarkGologPrintJSON** | 2805 ns/op | 148 B/op | 5 allocs/op |
+| **BenchmarkGologPrintFile** | 9067 ns/op | 139 B/op | 5 allocs/op |
+| BenchmarkLogrusPrint | 7243 ns/op | 1742 B/op | 54 allocs/op |
+| BenchmarkStdPrint | 1130 ns/op | 72 B/op | 5 allocs/op |
+
+`BenchmarkStdPrint` is the standard library's `log`, which has no levels, no
+fields and no formatter to run: it is the floor, not a competitor. The
+benchmarks are built in CI but not run there; timings from a shared runner are
+noise.
+
+> Feel free to send a [PR](https://github.com/kataras/golog/pulls) of your own logger benchmark to put it here!
 
 <details>
 <summary>Details</summary>
 
+Date: Fri 11 Sep 2026
+
+go1.27.0, windows/amd64, AMD Ryzen AI 9 465.
+
+The 2017 numbers this table replaces (3749 ns/op and 28 allocs/op for golog,
+9609 ns/op and 64 allocs/op for logrus, on an i7-4710HQ) are kept in git
+history with the screenshot below.
+
 ![](cmd.png)
-
-Date: Su 30 July 2017
-
-Processor: Intel(R) Core(TM) i7-4710HQ CPU @ 2.50GHz 2.50Ghz
-
-Ram: 8.00GB
 </details>

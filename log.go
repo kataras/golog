@@ -1,21 +1,27 @@
 package golog
 
 import (
-	"fmt"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
+	"uuid"
 )
 
 // A Log represents a log line.
 type Log struct {
 	// Logger is the original printer of this Log.
 	Logger *Logger `json:"-"`
+	// ID uniquely identifies this log entry.
+	//
+	// It is the zero UUID, and omitted from the output, unless the Logger has
+	// a NewID generator set. See `Logger.SetIDGenerator`.
+	ID uuid.UUID `json:"id,omitzero"`
 	// Time is the time of fired.
 	Time time.Time `json:"-"`
 	// Timestamp is the unix time in second of fired.
-	Timestamp int64 `json:"timestamp,omitempty"`
+	Timestamp int64 `json:"timestamp,omitzero"`
 	// Level is the log level.
 	Level Level `json:"level"`
 	// Message is the string reprensetation of the log's main body.
@@ -33,6 +39,24 @@ type Log struct {
 	// NewLine has to do with the methods called,
 	// not the original content of the `Message`.
 	NewLine bool `json:"-"`
+
+	// timeFormat is the Logger's TimeFormat at the moment the entry was made,
+	// so FormatTime does not have to read the Logger while it may be changing.
+	timeFormat string
+	// buf is the scratch space the plain-text line is built in. It lives on
+	// the pooled Log so that a line costs no allocation of its own.
+	buf []byte
+}
+
+// Field returns the value stored in this Log's Fields under "key" as a T.
+//
+// It reports false when the key is absent or its value is not a T:
+//
+//	username, ok := log.Field[string]("username")
+//
+// Shorthand for `log.Fields.Get`, which is where the lookup actually happens.
+func (l *Log) Field[T any](key string) (T, bool) {
+	return l.Fields.Get[T](key)
 }
 
 // Frame represents the log's caller.
@@ -56,19 +80,26 @@ func (f Frame) String() string {
 
 // FormatTime returns the formatted `Time`.
 func (l *Log) FormatTime() string {
-	if l.Logger.TimeFormat == "" {
+	if l.timeFormat == "" {
 		return ""
 	}
-	return l.Time.Format(l.Logger.TimeFormat)
+	return l.Time.Format(l.timeFormat)
 }
 
 var funcNameReplacer = strings.NewReplacer(")", "", "(", "", "*", "")
 
 // GetStacktrace tries to return the callers of this function.
 func GetStacktrace(limit int) (callerFrames []Frame) {
+	return appendStacktrace(nil, limit)
+}
+
+// appendStacktrace is GetStacktrace into a caller-owned slice, so that a
+// pooled Log can reuse the one it already has.
+func appendStacktrace(dst []Frame, limit int) []Frame {
 	if limit < 0 {
 		return nil
 	}
+	dst = dst[:0]
 
 	var pcs [32]uintptr
 	n := runtime.Callers(1, pcs[:])
@@ -76,37 +107,14 @@ func GetStacktrace(limit int) (callerFrames []Frame) {
 
 	for {
 		f, more := frames.Next()
-		file := filepath.ToSlash(f.File)
 
-		if strings.Contains(file, "go/src/") {
-			continue
-		}
-
-		if strings.Contains(file, "github.com/kataras/golog") &&
-			!strings.Contains(file, "_examples") &&
-			!strings.Contains(file, "_test.go") &&
-			!strings.Contains(file, "integration.go") {
-			continue
-		}
-
-		if file != "" { // keep it here, break should be respected.
-			funcName := f.Function
-			if idx := strings.Index(funcName, ".("); idx > 1 {
-				funcName = funcNameReplacer.Replace(funcName[idx+1:])
-				// e.g. method: github.com/kataras/iris/v12.(*Application).Listen to:
-				//      Application.Listen
-			} else if idx = strings.LastIndexByte(funcName, '/'); idx >= 0 && len(funcName) > idx+1 {
-				funcName = strings.Replace(funcName[idx+1:], ".", "/", 1)
-				// e.g. package-level function: github.com/kataras/iris/v12/context.Do to
-				// context/Do
-			}
-
-			callerFrames = append(callerFrames, Frame{
-				Function: funcName,
-				Source:   fmt.Sprintf("%s:%d", f.File, f.Line),
+		if f.File != "" && !skipFrame(f) { // keep it here, break should be respected.
+			dst = append(dst, Frame{
+				Function: shortFunctionName(f.Function),
+				Source:   f.File + ":" + strconv.Itoa(f.Line),
 			})
 
-			if limit > 0 && len(callerFrames) >= limit {
+			if limit > 0 && len(dst) >= limit {
 				break
 			}
 		}
@@ -116,5 +124,65 @@ func GetStacktrace(limit int) (callerFrames []Frame) {
 		}
 	}
 
-	return
+	return dst
+}
+
+// skipFrame reports whether a frame is the standard library's or golog's own,
+// neither of which is the caller anyone wants to see.
+func skipFrame(f runtime.Frame) bool {
+	if isStdlibFrame(f.Function) {
+		return true
+	}
+
+	if rest, ok := strings.CutPrefix(f.Function, "github.com/kataras/golog"); ok &&
+		(rest == "" || rest[0] == '.' || rest[0] == '/') {
+		// golog's own frames, matched on the function's package path rather
+		// than on the file path, which does not contain the module path when
+		// golog is built from a checkout. The examples, the tests and the
+		// integrations are the exceptions: there golog is the caller.
+		file := filepath.ToSlash(f.File)
+		return !strings.Contains(file, "/_examples/") &&
+			!strings.HasSuffix(file, "_test.go") &&
+			!strings.HasSuffix(file, "/integration.go")
+	}
+
+	return false
+}
+
+// isStdlibFrame reports whether "function" (as runtime.Frame.Function spells
+// it) belongs to the standard library.
+//
+// A standard library package path has no dot in its first element
+// ("runtime.Callers", "net/http.(*conn).serve"), a module path does
+// ("github.com/kataras/iris/v12.(*Application).Listen"). The old check looked
+// for "go/src/" in the file path instead, which is also where GOPATH-layout
+// projects live, so those got empty stacktraces. Packages "main" and
+// "command-line-arguments" are the caller's, whatever their path.
+func isStdlibFrame(function string) bool {
+	head, _, hasSlash := strings.Cut(function, "/")
+	if hasSlash {
+		return !strings.Contains(head, ".")
+	}
+
+	pkg, _, _ := strings.Cut(head, ".")
+	return pkg != "main" && pkg != "command-line-arguments"
+}
+
+// shortFunctionName trims a fully qualified function name down to what a
+// person reads: "Application.Listen" for a method, "context/Do" for a
+// package-level function.
+func shortFunctionName(funcName string) string {
+	if before, after, ok := strings.Cut(funcName, ".("); ok && len(before) > 1 {
+		// e.g. method: github.com/kataras/iris/v12.(*Application).Listen to:
+		//      Application.Listen
+		return funcNameReplacer.Replace(after)
+	}
+
+	if _, after, ok := strings.CutLast(funcName, "/"); ok && after != "" {
+		// e.g. package-level function: github.com/kataras/iris/v12/context.Do to
+		// context/Do
+		return strings.Replace(after, ".", "/", 1)
+	}
+
+	return funcName
 }

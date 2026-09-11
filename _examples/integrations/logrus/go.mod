@@ -1,6 +1,6 @@
 module integrations/logrus
 
-go 1.25
+go 1.27
 
 replace github.com/kataras/golog => ../../../
 
@@ -9,7 +9,4 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 )
 
-require (
-	github.com/kataras/pio v0.0.14 // indirect
-	golang.org/x/sys v0.31.0 // indirect
-)
+require golang.org/x/sys v0.47.0 // indirect

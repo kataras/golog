@@ -1,6 +1,6 @@
 # ✒️ golog
 
-_golog_ is a zero-dependency simple, fast and easy-to-use level-based logger written in [Go Programming Language](https://go.dev).
+_golog_ is a simple, fast and easy-to-use level-based logger written in the [Go Programming Language](https://go.dev). Its only dependency is `golang.org/x/sys`, for terminal detection.
 
 ![Output from win terminal](screen.png)
 
@@ -11,19 +11,19 @@ _golog_ is a zero-dependency simple, fast and easy-to-use level-based logger wri
 * Focus on high performance and agile perspective of things
 * Easy API and a default package-level instance, i.e `golog#Fatalf/Errorf/Warnf/Infof/Debugf`
 * Fully compatible with the standard library
-* Thanks to the [pio library](https://github.com/kataras/pio) it supports any type of structure, gives you the ability to `Hijack` and `Handle` or `Intercept` the on-going logs too 
+* Intercept every log before it is written with `Handle`, or replace the rendering entirely with a `Formatter`
 * Set or even Add unlimited number of output targets, `io.Writer`
 * Scan from any `io.Reader` and log to the defined output target(s)
 * Levels such as `fatal`,`error`, `warn`, `info`, `debug`, or `disable`
 * Beautiful (**customizable**) colors for leveled logs, automatically omit colors when output does not support colors (i.e files)
-* Incredible high-performant, 3 times faster than your favourite logger
+* Incredible high-performant, 4 times faster than your favourite logger
 * Never-Panics
 
 Navigate through [_examples](_examples/) and [integrations](_examples/integrations/) to learn if that fair solution suits your needs. -->
 
 ## 🚀 Installation
 
-The only requirement is the Go Programming Language[*](https://go.dev/dl).
+The only requirement is the [Go Programming Language](https://go.dev/dl), version 1.27 or later.
 
 <details>
 <summary>Go modules</summary>
@@ -37,10 +37,10 @@ Or edit your project's go.mod file and execute $ go build.
 ```mod
 module your_project_name
 
-go 1.25
+go 1.27
 
 require (
-    github.com/kataras/golog v0.1.14
+    github.com/kataras/golog v0.2.0
 )
 ```
 
@@ -142,7 +142,7 @@ golog.ErrorText("custom text", 156)
 
 The `golog.Logger` is using common, expected log methods, therefore you can integrate it with ease.
 
-Take for example the [badger](github.com/dgraph-io/badger) database. You want to add a prefix of `[badger]` in your logs  when badger wants to print something.
+Take for example the [badger](https://github.com/dgraph-io/badger) database. You want to add a prefix of `[badger]` in your logs  when badger wants to print something.
 
 1. Create a child logger with a prefix text using the `Child` function,
 2. disable new lines (because they are managed by badger itself) and you are ready to GO:
@@ -159,7 +159,7 @@ db, err := badger.Open(opts)
 
 You can put `golog` in front of your existing loggers using the [Install](https://pkg.go.dev/github.com/kataras/golog?tab=doc#Logger.Install) method.
 
-Supporte loggers:
+Supported loggers:
 
 - log
 - slog
@@ -206,6 +206,50 @@ golog.Debug(`this debug message will not be shown,
     because the logrus level is InfoLevel`)
 golog.Error(`this error message will be visible as JSON,
     because of logrus.JSONFormatter`)
+```
+
+## Log Identifiers
+
+Every log entry can carry a unique identifier, generated with the standard library's [uuid](https://pkg.go.dev/uuid) package (Go 1.27). It is off by default: no `id` appears anywhere until you install a generator.
+
+```go
+import "uuid"
+
+// NewV7 is the one to reach for in logs: v7 UUIDs carry a timestamp in their
+// leading bits, so the identifiers sort in the order the lines were written.
+golog.SetIDGenerator(uuid.NewV7)
+
+golog.Info("this line has an id of its own")
+// [INFO] 2026/08/21 16:04 01a0248d-c937-7ab9-aca1-d9a78c76325d this line has an id of its own
+```
+
+Returning a fixed value instead tags every line of a logger with the same identifier, so one request's lines can be picked back out of the stream. Derive that logger with `Clone`, which nothing else shares (`Child` caches one logger per key, so two requests on the same route would be setting each other's id):
+
+```go
+requestID := uuid.NewV7()
+
+reqLogger := golog.Default.Clone().
+    SetIDGenerator(func() uuid.UUID { return requestID })
+
+reqLogger.Info("started")  // both lines
+reqLogger.Info("finished") // carry the same id
+```
+
+The identifier shows up as an `"id"` member in the JSON formatter, and as an `id` attribute when a `log/slog` logger is installed.
+
+## Typed Fields
+
+A `Handler` or `Formatter` reads a log's data out of its `Fields`, which is a `map[string]any`. `Fields.Get` and its `Log.Field` shorthand do the type assertion for you:
+
+```go
+golog.Handle(func(log *golog.Log) bool {
+    username, ok := log.Field[string]("username")
+    if ok {
+        // [...]
+    }
+
+    return false
+})
 ```
 
 ## Output Format
@@ -318,18 +362,27 @@ func main() {
 * [change text and color](_examples/customize-levels/text-and-colors/main.go)
 * [customize output](_examples/customize-output/main.go)
 * [multi output](_examples/multi-output/main.go)
-* [scan](_examples/scan/main.go)
-* [logurs integration](_examples/integrations/logrus/main.go)
+* [log rotation](_examples/rotation/main.go)
+* [log identifiers](_examples/correlation/main.go) **NEW**
+* [logrus integration](_examples/integrations/logrus/main.go)
 * [log.Logger std integration](_examples/integrations/std/main.go)
-* [postgres integration](https://github.com/kataras/pgx-golog) **NEW**
+* [log/slog integration](_examples/integrations/slog/main.go)
+* [postgres integration](https://github.com/kataras/pgx-golog)
 * [new instance](_examples/instance/main.go)
 
 ## 🔥 Benchmarks
 
-| test | times ran (large is better) |  ns/op (small is better) | B/op (small is better) | allocs/op (small is better) |
-| -----------|--------|-------------|-------------|-------------|
-| **BenchmarkGologPrint** | 10000000 | 3749 ns/op | 890 B/op | 28 allocs/op |
-| BenchmarkLogrusPrint | &nbsp; 3000000 | 9609 ns/op | 1611 B/op | 64 allocs/op |
+Each operation writes three log lines (error, warning, info) to a nop output, except `BenchmarkGologPrintFile`, which writes them to a real file so that the syscalls count too.
+
+| test | ns/op (small is better) | B/op (small is better) | allocs/op (small is better) |
+| ----------- | ------------- | ------------- | ------------- |
+| **BenchmarkGologPrint** | &nbsp; 923 ns/op | &nbsp; 154 B/op | &nbsp; 5 allocs/op |
+| **BenchmarkGologPrintJSON** | 2805 ns/op | &nbsp; 148 B/op | &nbsp; 5 allocs/op |
+| **BenchmarkGologPrintFile** | 9067 ns/op | &nbsp; 139 B/op | &nbsp; 5 allocs/op |
+| BenchmarkLogrusPrint | 7243 ns/op | 1742 B/op | 54 allocs/op |
+| BenchmarkStdPrint | 1130 ns/op | &nbsp; &nbsp;72 B/op | &nbsp; 5 allocs/op |
+
+> go1.27.0, windows/amd64. `BenchmarkStdPrint` is the standard library's `log`, which has no levels, no fields and no formatter to run: it is the floor, not a competitor. A plain golog line is a single `Write`; v0.1.15 issued up to nine per line, which is why the file benchmark was 3.5 times slower there (31 µs).
 
 Click [here](_benchmarks) for details.
 

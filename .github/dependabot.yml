@@ -1,11 +1,33 @@
 version: 2
 updates:
+  # The root module. `exclude-paths` used to sit here to keep Dependabot out of
+  # _examples; it is not a valid key for an updates entry, so at best it did
+  # nothing and at worst it failed config validation -- which would explain how
+  # golang.org/x/sys drifted eight minor versions without a single PR. A gomod
+  # entry does not recurse into nested modules anyway, so each one is listed.
   - package-ecosystem: "gomod"
     directory: "/"
-    exclude-paths:
-      - "_examples/"
     schedule:
       interval: "monthly"
+
+  - package-ecosystem: "gomod"
+    directory: "/_examples"
+    schedule:
+      interval: "monthly"
+
+  - package-ecosystem: "gomod"
+    directory: "/_examples/integrations/logrus"
+    schedule:
+      interval: "monthly"
+
+  - package-ecosystem: "gomod"
+    directory: "/_benchmarks"
+    schedule:
+      interval: "monthly"
+
+  # Raises the `uses:` lines in .github/workflows. It does not know what the
+  # golangci-lint `version:` input means, so that pin has to be checked by hand
+  # whenever the action moves.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

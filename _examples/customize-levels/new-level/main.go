@@ -19,12 +19,14 @@ func main() {
 	// First we create our level to a golog.Level
 	// in order to be used in the Log functions.
 	var SuccessLevel golog.Level = 6
-	// Register our level, just three fields.
-	golog.Levels[SuccessLevel] = &golog.LevelMetadata{
+	// Register our level, just three fields. RegisterLevel is safe to call at
+	// any time; writing to golog.Levels directly also works, as long as it
+	// happens before logging starts.
+	golog.RegisterLevel(SuccessLevel, &golog.LevelMetadata{
 		Name:      "success",
 		Title:     "[SUCC]",
 		ColorCode: 32, // Green
-	}
+	})
 
 	// create a new golog logger
 	myLogger := golog.New()

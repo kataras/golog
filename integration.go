@@ -3,6 +3,7 @@ package golog
 import (
 	"context"
 	"log/slog"
+	"uuid"
 )
 
 func integrate(logger any) Handler {
@@ -38,12 +39,23 @@ func integrateSlog(logger *slog.Logger) Handler {
 	return func(log *Log) bool {
 		// golog level to slog level.
 		level := getSlogLevel(log.Level)
+
 		// golog fields to slog attributes.
-		if len(log.Fields) > 0 {
-			attrs := make([]slog.Attr, 0, len(log.Fields))
+		var attrs []slog.Attr
+		if hasID := log.ID != (uuid.UUID{}); hasID || len(log.Fields) > 0 {
+			attrs = make([]slog.Attr, 0, len(log.Fields)+1)
+			if hasID {
+				// Carried through as an attribute rather than dropped: an id
+				// that only reaches golog's own output is useless for
+				// correlating against whatever the slog handler writes.
+				attrs = append(attrs, slog.String("id", log.ID.String()))
+			}
 			for k, v := range log.Fields {
 				attrs = append(attrs, slog.Any(k, v))
 			}
+		}
+
+		if len(attrs) > 0 {
 			// log the message with attrs.
 			logger.LogAttrs(context.Background(), level, log.Message, attrs...)
 		} else {
