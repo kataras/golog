@@ -254,7 +254,7 @@ golog.Handle(func(log *golog.Log) bool {
 
 ## Output Format
 
-Any value that completes the [Formatter interface](https://github.com/kataras/golog/blob/master/formatter.go) can be used to write to the (leveled) output writer. By default the `"json"` formatter is available.
+Any value that completes the [Formatter interface](https://github.com/kataras/golog/blob/main/formatter.go) can be used to write to the (leveled) output writer. By default the `"json"` formatter is available.
 
 ### JSON
 

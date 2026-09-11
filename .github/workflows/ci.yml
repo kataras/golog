@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 # Nothing here writes to the repository. Without this block the token would
 # carry whatever the repository default is, which for many repositories is

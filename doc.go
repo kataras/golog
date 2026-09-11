@@ -419,7 +419,7 @@ If you enjoy what you just saw and want to learn more, please follow the below l
 
 Examples:
 
-	https://github.com/kataras/golog/tree/master/_examples
+	https://github.com/kataras/golog/tree/main/_examples
 */
 package golog
 

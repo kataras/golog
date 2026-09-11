@@ -282,7 +282,7 @@ Fix `Clone` not inherite the parent's formatters field (fixes `SetLevelFormat` o
 
 ## Mo 07 September | v0.1.5
 
-Introduce the [Formatter](https://github.com/kataras/golog/blob/master/formatter.go) interface. [Example](https://github.com/kataras/golog/tree/master/_examples/customize-output).
+Introduce the [Formatter](https://github.com/kataras/golog/blob/main/formatter.go) interface. [Example](https://github.com/kataras/golog/tree/main/_examples/customize-output).
 
 - Add `Logger.RegisterFormatter(Formatter)` to register a custom `Formatter`.
 - Add `Logger.SetFormat(formatter string, opts ...any)` to set the default formatter for all log levels.
