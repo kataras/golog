@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Fri 13 Nov 2026 | v0.2.1
+
+### Fixed
+
+- **`Fatal` and `Print` lines reached an installed `*slog.Logger` at Debug.**
+  `Install` hands every line to `slog` at the level golog maps it to, and that
+  mapping had no case for `FatalLevel` or for a line with no level, which is
+  what `Print`, `Printf`, `Println` and `Scan` write. Both fell through to
+  `slog.LevelDebug`, below the threshold of a handler left at its default
+  level, so a `Fatal` exited the process without printing why and a `Print`
+  line was dropped. `Fatal` now maps to `slog.LevelError`, the highest level
+  `slog` names, and a line with no level maps to `slog.LevelInfo`, which is
+  where the standard library sends `log.Print` output after `slog.SetDefault`.
+  Reported in [kataras/iris#2260](https://github.com/kataras/iris/issues/2260).
+
+### Changed
+
+- `golang.org/x/sys` is required at v0.48.0, up from v0.47.0.
+
 ## Fri 11 Sep 2026 | v0.2.0
 
 The Go 1.27 release, plus the fixes a pre-release review of the whole package

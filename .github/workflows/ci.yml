@@ -102,12 +102,18 @@ jobs:
     # schema for the version it installs before running anything, so a config
     # left on the v1 schema fails the job rather than being ignored.
     #
-    # golangci-lint v2.13 is a floor, not a preference: a released binary embeds
-    # the standard library of the Go SDK that built it, and v2.12's was
-    # go1.26.2, which refuses to run against a module whose go directive says
-    # 1.27 ("the Go language version used to build golangci-lint is lower than
-    # the targeted Go version"). That is a hard failure of the whole job, not a
-    # lint diff. Any future bump of the go directive needs the same check.
+    # golangci-lint v2.15 is a floor, not a preference: a released binary embeds
+    # the type checker of the Go SDK that built it, and it has failed this job
+    # twice for that reason alone. v2.12 was built with go1.26.2 and refuses to
+    # run against a module whose go directive says 1.27 ("the Go language
+    # version used to build golangci-lint is lower than the targeted Go
+    # version"). v2.13 runs, but cannot read what the Go 1.27.4 on the runner
+    # compiles: every import fails with "export data version 5 is greater than
+    # maximum supported version 4", reported as typecheck issues. setup-go
+    # above takes the latest patch release (check-latest), so a new Go patch
+    # can do this again with no change in this repository. Either one is a
+    # hard failure of the whole job, not a lint diff. Any future bump of the go
+    # directive needs the same check.
     #
     # Dependabot watches `github-actions` and will raise the `uses:` line on its
     # own. It does not know what `version:` below means, so that is the half
@@ -115,7 +121,7 @@ jobs:
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v9
       with:
-        version: v2.13
+        version: v2.15
 
   # Every target the toolchain knows about.
   #
