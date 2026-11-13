@@ -569,6 +569,95 @@ func equalStrings(got, want []string) bool {
 	return true
 }
 
+// TestInstallSlogLevels pins the slog level each kind of line arrives at.
+//
+// slog has no fatal level and no level-less print, so those two need a choice.
+// A Fatal line goes to Error, the highest level slog names. A Print line goes
+// to Info, which is where the standard library sends log.Print output after
+// slog.SetDefault. Both used to arrive at Debug, below the threshold of slog's
+// default handler, so a Fatal exited the process without printing why.
+func TestInstallSlogLevels(t *testing.T) {
+	// A level that neither golog nor slog has a name for.
+	const unnamed Level = 99
+
+	tests := []struct {
+		name  string
+		write func(*Logger)
+		want  string
+	}{
+		{
+			// Fatal and Fatalf emit at FatalLevel and then exit. Log emits the
+			// same line and returns, which is what lets a test read it.
+			name:  "fatal is error",
+			write: func(l *Logger) { l.Log(FatalLevel, "fatal") },
+			want:  "level=ERROR msg=fatal",
+		},
+		{
+			name:  "error",
+			write: func(l *Logger) { l.Error("error") },
+			want:  "level=ERROR msg=error",
+		},
+		{
+			name:  "warn",
+			write: func(l *Logger) { l.Warn("warn") },
+			want:  "level=WARN msg=warn",
+		},
+		{
+			name:  "info",
+			write: func(l *Logger) { l.Info("info") },
+			want:  "level=INFO msg=info",
+		},
+		{
+			name:  "debug",
+			write: func(l *Logger) { l.Debug("debug") },
+			want:  "level=DEBUG msg=debug",
+		},
+		{
+			name:  "Print is info",
+			write: func(l *Logger) { l.Print("print") },
+			want:  "level=INFO msg=print",
+		},
+		{
+			name:  "Printf is info",
+			write: func(l *Logger) { l.Printf("%s", "printf") },
+			want:  "level=INFO msg=printf",
+		},
+		{
+			name:  "Println is info",
+			write: func(l *Logger) { l.Println("println") },
+			want:  "level=INFO msg=println",
+		},
+		{
+			name:  "an unnamed level stays at debug",
+			write: func(l *Logger) { l.Level = unnamed; l.Log(unnamed, "unnamed") },
+			want:  "level=DEBUG msg=unnamed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l, _ := newTestLogger(t)
+
+			var out bytes.Buffer
+			l.Install(slog.New(slog.NewTextHandler(&out, &slog.HandlerOptions{
+				Level: slog.LevelDebug,
+				ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+					if a.Key == slog.TimeKey {
+						return slog.Attr{}
+					}
+					return a
+				},
+			})))
+
+			tt.write(l)
+
+			if got := strings.TrimSuffix(out.String(), "\n"); got != tt.want {
+				t.Errorf("slog got %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestHandlerStopsTheChain(t *testing.T) {
 	l, buf := newTestLogger(t)
 	l.SetTimeFormat("")

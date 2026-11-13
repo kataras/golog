@@ -98,11 +98,17 @@ func integrateExternalLogger(logger ExternalLogger) Handler {
 
 func getSlogLevel(level Level) slog.Level {
 	switch level {
-	case ErrorLevel:
+	case FatalLevel, ErrorLevel:
+		// slog has no fatal level and Error is the highest one it names. A
+		// Fatal line says why the process is about to exit, so it must not
+		// sit below the threshold of a handler left at its default level.
 		return slog.LevelError
 	case WarnLevel:
 		return slog.LevelWarn
-	case InfoLevel:
+	case InfoLevel, DisableLevel:
+		// DisableLevel is what a Print, Printf, Println or Scan line carries:
+		// it has no level. The standard library sends log.Print output to
+		// slog at Info as well.
 		return slog.LevelInfo
 	case DebugLevel:
 		return slog.LevelDebug
